@@ -1,6 +1,7 @@
 import z from "zod";
+import { CourseBasicSchema } from "./course.schema";
 
-export const UserSchema = z.object({
+export const UserBasicSchema = z.object({
   taiKhoan: z.string(),
   matKhau: z.string(),
   hoTen: z.string(),
@@ -9,13 +10,18 @@ export const UserSchema = z.object({
   maNhom: z.string(),
   email: z.string().email(),
 });
+export type User = z.infer<typeof UserBasicSchema>;
 
-export type User = z.infer<typeof UserSchema>;
+export const ProfileSchema = UserBasicSchema.extend({
+  chiTietKhoaHocGhiDanh: z.array(CourseBasicSchema).optional(),
+});
+export type Profile = z.infer<typeof ProfileSchema>;
 
-export const LoginResponseSchema = UserSchema.extend({
+export const LoginResponseSchema = UserBasicSchema.omit({
+  matKhau: true,
+}).extend({
   accessToken: z.string(),
 });
-
 export type LoginResponse = z.infer<typeof LoginResponseSchema>;
 
 export const LoginSchema = z.object({
@@ -23,46 +29,38 @@ export const LoginSchema = z.object({
     .string()
     .min(5, "Tài khoản phải có tối thiểu 5 ký tự")
     .max(30, "Tài khoản không được vượt quá 30 ký tự"),
-
   matKhau: z
     .string()
     .min(5, "Tài khoản phải có tối thiểu 5 ký tự")
     .max(30, "Tài khoản không được vượt quá 30 ký tự"),
 });
-
 export type LoginPayload = z.infer<typeof LoginSchema>;
 
-export const RegisterSchema = z
+export const RegisterFormSchema = z
   .object({
     taiKhoan: z
       .string()
       .min(5, "Tài khoản phải có tối thiểu 5 ký tự")
       .max(30, "Tài khoản không được vượt quá 30 ký tự"),
-
     matKhau: z
       .string()
       .min(5, "Mật khẩu phải có tối thiểu 5 ký tự")
       .max(30, "Mật khẩu không được vượt quá 30 ký tự"),
-
     xacNhanMatKhau: z.string(),
-
     hoTen: z
       .string()
       .min(5, "Họ tên phải có tối thiểu 5 ký tự")
       .max(30, "Họ tên không được vượt quá 30 ký tự"),
-
     soDT: z
       .string()
       .regex(
         /(84|0[3|5|7|8|9])+([0-9]{8})\b/,
         "Số điện thoại không hợp lệ (phải gồm 10 chữ số)",
       ),
-
     maNhom: z
       .string()
       .min(1, "Mã nhóm không được để trống")
       .max(4, "Mã nhóm không được vượt quá 4 ký tự"),
-
     email: z
       .string()
       .min(1, "Email không được để trống")
@@ -72,5 +70,9 @@ export const RegisterSchema = z
     message: "Mật khẩu xác nhận không khớp",
     path: ["xacNhanMatKhau"],
   });
+export type RegisterForm = z.infer<typeof RegisterFormSchema>;
 
-export type RegisterPayload = z.infer<typeof RegisterSchema>;
+export const RegiterSchema = RegisterFormSchema.omit({
+  xacNhanMatKhau: true,
+});
+export type RegisterPayload = z.infer<typeof RegiterSchema>;
