@@ -76,3 +76,8 @@ export const RegiterSchema = RegisterFormSchema.omit({
   xacNhanMatKhau: true,
 });
 export type RegisterPayload = z.infer<typeof RegiterSchema>;
+
+export const RegisterResponseSchema = UserBasicSchema.omit({
+  maLoaiNguoiDung: true,
+});
+export type RegisterResponse = z.infer<typeof RegisterResponseSchema>;
