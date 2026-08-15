@@ -26,12 +26,11 @@ export const CourseSchema = CourseBasicSchema.omit({ danhGia: true }).extend({
     taiKhoan: true,
     hoTen: true,
     maLoaiNguoiDung: true,
-  }).extend({
-    tenLoaiNguoiDung: true,
-    danhMucKhoaHoc: z.object({
-      maDanhMucKhoahoc: z.string(),
-      tenDanhMucKhoaHoc: z.string(),
-    }),
+  }),
+  tenLoaiNguoiDung: true,
+  danhMucKhoaHoc: z.object({
+    maDanhMucKhoahoc: z.string(),
+    tenDanhMucKhoaHoc: z.string(),
   }),
 });
 export type Course = z.infer<typeof CourseSchema>;
