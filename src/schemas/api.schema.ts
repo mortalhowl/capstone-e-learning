@@ -2,7 +2,7 @@ import z from "zod";
 
 export const createPaginatedResponse = <T extends z.ZodTypeAny>(
   itemSchema: T,
-) => {
+) =>
   z.object({
     currentPage: z.number(),
     count: z.number(),
@@ -10,7 +10,6 @@ export const createPaginatedResponse = <T extends z.ZodTypeAny>(
     totalCount: z.number(),
     items: z.array(itemSchema),
   });
-};
 
 export const safeParseData = <T extends z.ZodTypeAny>(
   schema: T,
