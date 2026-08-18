@@ -6,8 +6,15 @@ import {
   isServer,
 } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { ThemeProvider } from "next-themes";
 import { NODE_ENV } from "@/lib/constants";
+import { ThemeProvider as NextThemesProvider } from "next-themes";
+
+export function ThemeProvider({
+  children,
+  ...props
+}: React.ComponentProps<typeof NextThemesProvider>) {
+  return <NextThemesProvider {...props}>{children}</NextThemesProvider>;
+}
 
 const makeQueryClient = () =>
   new QueryClient({
@@ -34,12 +41,16 @@ export default function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {children}
-      <ThemeProvider />
-      {NODE_ENV !== "production" ? (
+      <ThemeProvider
+        attribute="class"
+        defaultTheme="system"
+        enableSystem
+        disableTransitionOnChange
+      >
+        {children}
+      </ThemeProvider>
+      {NODE_ENV !== "production" && (
         <ReactQueryDevtools initialIsOpen={false} />
-      ) : (
-        ""
       )}
     </QueryClientProvider>
   );
