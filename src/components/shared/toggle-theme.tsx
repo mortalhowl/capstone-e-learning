@@ -1,14 +1,22 @@
 "use client";
 
+import * as React from "react";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 
 import { Button } from "@/components/ui/button";
 
+const emptySubscribe = () => () => {};
+
 export function ToggleTheme() {
+  const mounted = React.useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
   const { resolvedTheme, setTheme } = useTheme();
 
-  if (!resolvedTheme) {
+  if (!mounted) {
     return (
       <Button aria-label="Toggle theme" disabled size="icon" variant="outline">
         <Sun data-icon="inline-start" />
