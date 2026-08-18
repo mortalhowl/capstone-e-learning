@@ -1,5 +1,4 @@
 import z from "zod";
-import { UserBasicSchema } from "./user.schema";
 
 export const CourseCategorySchema = z.object({
   maDanhMuc: z.string(),
@@ -19,15 +18,18 @@ export const CourseBasicSchema = z.object({
 });
 export type CourseBasic = z.infer<typeof CourseBasicSchema>;
 
+export const CourseCreatorSchema = z.object({
+  taiKhoan: z.string(),
+  hoTen: z.string(),
+  maLoaiNguoiDung: z.string(),
+  tenLoaiNguoiDung: z.string().optional(),
+});
+export type CourseCreator = z.infer<typeof CourseCreatorSchema>;
+
 export const CourseSchema = CourseBasicSchema.omit({ danhGia: true }).extend({
   maNhom: z.string(),
   soLuongHocVien: z.number(),
-  nguoiTao: UserBasicSchema.pick({
-    taiKhoan: true,
-    hoTen: true,
-    maLoaiNguoiDung: true,
-  }),
-  tenLoaiNguoiDung: true,
+  nguoiTao: CourseCreatorSchema,
   danhMucKhoaHoc: z.object({
     maDanhMucKhoahoc: z.string(),
     tenDanhMucKhoaHoc: z.string(),
