@@ -10,7 +10,7 @@ axiosInstance.interceptors.request.use((config) => {
   config.headers.TokenCybersoft = CYBERSOFT_TOKEN;
   if (typeof window !== "undefined") {
     const token = localStorage.getItem("ACCESS_TOKEN");
-    config.headers.Authorization = `Beaerer ${token}`;
+    config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });

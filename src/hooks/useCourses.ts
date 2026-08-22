@@ -1,4 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { AxiosError } from "axios";
+import { toast } from "sonner";
+
 import { courseService } from "@/services/course.service";
 import type { CourseRegisterPayload } from "@/schemas/course.schema";
 import { userKeys } from "./useUsers";
@@ -46,11 +49,12 @@ export const useCourseByCategory = (maDanhMuc: string) =>
       courseService.getByCategory(maDanhMuc).then((res) => res.data),
   });
 
-export const useEnrollStudent = (maKhoaHoc: string) =>
+export const useEnrollStudent = (maKhoaHoc: string, enabled = true) =>
   useQuery({
-    queryKey: ["enroll-student"],
+    queryKey: ["enroll-student", maKhoaHoc],
     queryFn: () =>
       courseService.getEnrollStudent(maKhoaHoc).then((res) => res.data),
+    enabled: Boolean(maKhoaHoc) && enabled,
   });
 
 export const useCourseRegister = () => {
@@ -60,12 +64,18 @@ export const useCourseRegister = () => {
     mutationFn: (payload: CourseRegisterPayload) =>
       courseService.courseRegister(payload),
     onSuccess: (_, payload) => {
+      toast.success("Đăng ký khóa học thành công!");
       queryClient.invalidateQueries({ queryKey: userKeys.profile() });
       queryClient.invalidateQueries({
         queryKey: courseKeys.detail(payload.maKhoaHoc),
       });
+      queryClient.invalidateQueries({
+        queryKey: ["enroll-student", payload.maKhoaHoc],
+      });
     },
-    // onError
+    onError: (error: AxiosError<string>) => {
+      toast.error(error.response?.data || "Đăng ký khóa học thất bại!");
+    },
   });
 };
 
@@ -76,11 +86,17 @@ export const useUnenroll = () => {
     mutationFn: (payload: CourseRegisterPayload) =>
       courseService.unenroll(payload),
     onSuccess: (_, payload) => {
+      toast.success("Hủy ghi danh thành công!");
       queryClient.invalidateQueries({ queryKey: userKeys.profile() });
       queryClient.invalidateQueries({
         queryKey: courseKeys.detail(payload.maKhoaHoc),
       });
+      queryClient.invalidateQueries({
+        queryKey: ["enroll-student", payload.maKhoaHoc],
+      });
     },
-    // onError
+    onError: (error: AxiosError<string>) => {
+      toast.error(error.response?.data || "Hủy ghi danh thất bại!");
+    },
   });
 };
