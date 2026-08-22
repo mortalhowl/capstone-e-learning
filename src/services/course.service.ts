@@ -10,8 +10,8 @@ import {
 } from "@/schemas/course.schema";
 import { createPaginatedResponse } from "@/schemas/api.schema";
 
-const PaginatedCourseSchema = createPaginatedResponse(CourseSchema);
-type PaginatedCourse = z.infer<typeof PaginatedCourseSchema>;
+export const PaginatedCourseSchema = createPaginatedResponse(CourseSchema);
+export type PaginatedCourse = z.infer<typeof PaginatedCourseSchema>;
 
 export const courseService = {
   getCourses: (tenKhoaHoc = "") =>

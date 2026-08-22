@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { isAxiosError } from "axios";
 
 import { LoginSchema, type LoginPayload } from "@/schemas/user.schema";
-import { useLogin } from "@/hooks/userUsers";
+import { useLogin } from "@/hooks/useUsers";
 import { useUser } from "@/stores/auth.store";
 import { AuthCard } from "@/components/shared/auth-card";
 import { PasswordInput } from "@/components/shared/password-input";

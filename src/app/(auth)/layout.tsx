@@ -2,7 +2,6 @@ import * as React from "react";
 import Link from "next/link";
 import { GraduationCap } from "lucide-react";
 import { ToggleTheme } from "@/components/shared/toggle-theme";
-import { Toaster } from "@/components/ui/sonner";
 
 export default function AuthLayout({
   children,
@@ -64,9 +63,6 @@ export default function AuthLayout({
           </Link>
         </p>
       </footer>
-
-      {/* Toast notifications */}
-      <Toaster richColors position="top-right" />
     </div>
   );
 }
