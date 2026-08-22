@@ -10,7 +10,6 @@ export default function AuthLayout({
 }) {
   return (
     <div className="relative min-h-screen flex flex-col justify-between bg-background text-foreground selection:bg-primary/20 selection:text-primary transition-colors">
-      {/* Background ambient decorative glow */}
       <div
         className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
         aria-hidden="true"
@@ -18,7 +17,6 @@ export default function AuthLayout({
         <div className="absolute -top-[40%] left-1/2 -translate-x-1/2 w-[1000px] h-[600px] rounded-full bg-gradient-to-tr from-primary/10 via-primary/5 to-transparent blur-3xl opacity-70 dark:opacity-30" />
       </div>
 
-      {/* Top Header */}
       <header className="w-full border-b border-border/40 bg-background/80 backdrop-blur-md sticky top-0 z-30">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between max-w-7xl">
           <Link
@@ -39,12 +37,10 @@ export default function AuthLayout({
         </div>
       </header>
 
-      {/* Main Content Area */}
       <main className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6 md:p-8">
         {children}
       </main>
 
-      {/* Bottom Footer Note */}
       <footer className="w-full py-6 text-center text-xs text-muted-foreground/80 px-4">
         <p>
           Bằng việc tiếp tục, bạn đồng ý với{" "}

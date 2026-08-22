@@ -38,7 +38,6 @@ export function LoginForm() {
     },
   });
 
-  // Nếu đã đăng nhập, chuyển hướng ngay về trang chủ (không cho vào trang login)
   React.useEffect(() => {
     if (currentUser) {
       router.replace("/");
@@ -55,21 +54,9 @@ export function LoginForm() {
       },
       onError: (error) => {
         if (isAxiosError(error)) {
-          const serverMessage =
-            error.response?.data?.content ||
-            error.response?.data?.message ||
-            error.response?.data;
-
-          toast.error("Đăng nhập thất bại", {
-            description:
-              typeof serverMessage === "string"
-                ? serverMessage
-                : "Tài khoản hoặc mật khẩu không chính xác!",
-          });
+          toast.error(error.response?.data || "Đăng nhập thất bại!");
         } else {
-          toast.error("Đã xảy ra lỗi", {
-            description: "Vui lòng kiểm tra kết nối mạng và thử lại sau.",
-          });
+          toast.error("Đã xảy ra lỗi, vui lòng thử lại sau!");
         }
       },
     });
@@ -81,7 +68,6 @@ export function LoginForm() {
     });
   };
 
-  // Hiển thị trạng thái chuyển hướng nếu đã đăng nhập
   if (currentUser) {
     return (
       <AuthCard
@@ -107,7 +93,6 @@ export function LoginForm() {
       footerLinkHref="/register"
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
-        {/* Username Field */}
         <div className="space-y-1.5">
           <Label htmlFor="taiKhoan" className="text-sm font-medium text-foreground">
             Tài khoản
@@ -131,7 +116,6 @@ export function LoginForm() {
           )}
         </div>
 
-        {/* Password Field */}
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
             <Label htmlFor="matKhau" className="text-sm font-medium text-foreground">
@@ -168,7 +152,6 @@ export function LoginForm() {
           )}
         </div>
 
-        {/* Submit Button */}
         <Button
           type="submit"
           className="w-full h-10 font-semibold text-sm transition-all shadow-md shadow-primary/20 hover:shadow-primary/30"
@@ -185,7 +168,6 @@ export function LoginForm() {
         </Button>
       </form>
 
-      {/* Or Divider */}
       <div className="relative py-2 flex items-center justify-center">
         <Separator className="w-full" />
         <span className="absolute bg-card px-2 text-xs text-muted-foreground uppercase tracking-wider">
@@ -193,7 +175,6 @@ export function LoginForm() {
         </span>
       </div>
 
-      {/* Google Login Button */}
       <GoogleButton onClick={handleGoogleLogin} disabled={loginMutation.isPending} />
     </AuthCard>
   );

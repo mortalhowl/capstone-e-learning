@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { userService } from "@/services/user.service";
 import { useAuthStore } from "@/stores/auth.store";
-import { LoginPayload, type User } from "@/schemas/user.schema";
+import { LoginPayload, type RegisterPayload, type User } from "@/schemas/user.schema";
 
 export const userKeys = {
   all: ["users"] as const,
@@ -16,7 +16,12 @@ export const useLogin = () => {
   return useMutation({
     mutationFn: (payload: LoginPayload) => userService.login(payload),
     onSuccess: (res) => setUser(res.data),
-    // onError
+  });
+};
+
+export const useRegister = () => {
+  return useMutation({
+    mutationFn: (payload: RegisterPayload) => userService.register(payload),
   });
 };
 
@@ -35,6 +40,5 @@ export const useUpdateProfile = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: userKeys.profile() });
     },
-    // onError
   });
 };
