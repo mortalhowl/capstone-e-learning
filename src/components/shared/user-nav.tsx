@@ -37,7 +37,7 @@ export function UserNav({ user }: UserNavProps) {
   const handleLogout = () => {
     logout();
     toast.success("Đã đăng xuất thành công!");
-    router.push("/login");
+    router.push("/");
   };
 
   const isTeacher = user.maLoaiNguoiDung === "GV";
@@ -53,24 +53,26 @@ export function UserNav({ user }: UserNavProps) {
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end" className="w-56 p-1.5 shadow-lg border-border/60">
-        <DropdownMenuLabel className="font-normal px-2 py-1.5">
-          <div className="flex flex-col space-y-1">
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-sm font-semibold leading-none text-foreground truncate">
-                {user.hoTen}
+        <DropdownMenuGroup>
+          <DropdownMenuLabel className="font-normal px-2 py-1.5">
+            <div className="flex flex-col space-y-1">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm font-semibold leading-none text-foreground truncate">
+                  {user.hoTen}
+                </p>
+                <Badge
+                  variant={isTeacher ? "default" : "secondary"}
+                  className="text-[10px] px-1.5 py-0 h-4 font-medium shrink-0"
+                >
+                  {isTeacher ? "Giảng viên" : "Học viên"}
+                </Badge>
+              </div>
+              <p className="text-xs leading-none text-muted-foreground truncate">
+                {user.email}
               </p>
-              <Badge
-                variant={isTeacher ? "default" : "secondary"}
-                className="text-[10px] px-1.5 py-0 h-4 font-medium shrink-0"
-              >
-                {isTeacher ? "Giảng viên" : "Học viên"}
-              </Badge>
             </div>
-            <p className="text-xs leading-none text-muted-foreground truncate">
-              {user.email}
-            </p>
-          </div>
-        </DropdownMenuLabel>
+          </DropdownMenuLabel>
+        </DropdownMenuGroup>
 
         <DropdownMenuSeparator />
 
