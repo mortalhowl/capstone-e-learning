@@ -3,7 +3,7 @@
 import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Star, Eye } from "lucide-react";
+import { Eye, Users, Calendar } from "lucide-react";
 
 import type { Course } from "@/schemas/course.schema";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +26,21 @@ export function CourseCard({ course }: CourseCardProps) {
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   };
 
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return "";
+    try {
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return dateStr;
+      return new Intl.DateTimeFormat("vi-VN", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      }).format(date);
+    } catch {
+      return dateStr;
+    }
+  };
+
   return (
     <div className="group flex flex-col justify-between rounded-xl border border-border/60 bg-card text-card-foreground shadow-xs transition-all duration-300 hover:shadow-md hover:border-border hover:-translate-y-1 overflow-hidden">
       <div className="flex flex-col">
@@ -38,7 +53,7 @@ export function CourseCard({ course }: CourseCardProps) {
               src={imgSrc}
               alt={course.tenKhoaHoc}
               fill
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
               className="object-cover transition-transform duration-500 group-hover:scale-105"
               onError={() => {
                 setImgError(true);
@@ -84,17 +99,14 @@ export function CourseCard({ course }: CourseCardProps) {
             </span>
           </div>
 
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <div className="flex items-center gap-0.5 text-amber-500">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Star key={i} className="size-3.5 fill-amber-500 text-amber-500" />
-              ))}
+          <div className="flex items-center gap-4 text-xs text-muted-foreground pt-1 border-t border-border/40">
+            <div className="flex items-center gap-1">
+              <Users className="size-3.5 text-primary/70" />
+              <span>{course.soLuongHocVien ? course.soLuongHocVien.toLocaleString() : "0"} học viên</span>
             </div>
-            <div className="flex items-center gap-1 text-muted-foreground font-medium">
-              <span>(</span>
-              <Eye className="size-3" />
-              <span>{course.luotXem ? course.luotXem.toLocaleString() : "1,200"}</span>
-              <span>học viên)</span>
+            <div className="flex items-center gap-1">
+              <Eye className="size-3.5 text-muted-foreground" />
+              <span>{course.luotXem ? course.luotXem.toLocaleString() : "0"} lượt xem</span>
             </div>
           </div>
         </div>
@@ -102,9 +114,9 @@ export function CourseCard({ course }: CourseCardProps) {
 
       <div className="p-4 pt-0">
         <div className="flex items-center justify-between pt-3 border-t border-border/40">
-          <div className="flex flex-col">
-            <span className="text-[11px] text-muted-foreground font-medium">Học phí</span>
-            <span className="text-base font-bold text-primary">Miễn phí</span>
+          <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
+            <Calendar className="size-3.5 text-muted-foreground/70 shrink-0" />
+            <span>{formatDate(course.ngayTao) || "Mới"}</span>
           </div>
 
           <Link
@@ -114,7 +126,7 @@ export function CourseCard({ course }: CourseCardProps) {
               "h-8 px-3.5 text-xs font-semibold shadow-xs transition-transform active:scale-95"
             )}
           >
-            Đăng ký
+            Xem chi tiết
           </Link>
         </div>
       </div>
