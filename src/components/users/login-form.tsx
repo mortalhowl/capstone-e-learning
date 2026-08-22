@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
@@ -23,6 +23,8 @@ import { cn } from "@/lib/utils";
 
 export function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl");
   const currentUser = useUser();
   const loginMutation = useLogin();
 
@@ -40,9 +42,9 @@ export function LoginForm() {
 
   React.useEffect(() => {
     if (currentUser) {
-      router.replace("/");
+      router.replace(callbackUrl || "/");
     }
-  }, [currentUser, router]);
+  }, [currentUser, callbackUrl, router]);
 
   const onSubmit = async (values: LoginPayload) => {
     loginMutation.mutate(values, {
@@ -50,7 +52,7 @@ export function LoginForm() {
         toast.success("Đăng nhập thành công!", {
           description: "Chào mừng bạn quay trở lại với hệ thống.",
         });
-        router.push("/");
+        router.push(callbackUrl || "/");
       },
       onError: (error) => {
         if (isAxiosError(error)) {
