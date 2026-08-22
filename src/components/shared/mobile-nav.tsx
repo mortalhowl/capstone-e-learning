@@ -50,7 +50,7 @@ export function MobileNav({ user }: MobileNavProps) {
     setOpen(false);
     logout();
     toast.success("Đã đăng xuất thành công!");
-    router.push("/login");
+    router.push("/");
   };
 
   const navLinks = [
