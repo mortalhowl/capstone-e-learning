@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { courseService } from "@/services/course.service";
 import type { CourseRegisterPayload } from "@/schemas/course.schema";
-import { userKeys } from "./userUsers";
+import { userKeys } from "./useUsers";
 
 export const courseKeys = {
   all: ["courses"] as const,

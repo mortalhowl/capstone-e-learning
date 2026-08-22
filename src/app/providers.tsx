@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import {
   QueryClient,
   QueryClientProvider,
@@ -8,6 +9,7 @@ import {
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { NODE_ENV } from "@/lib/constants";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
+import { Toaster } from "@/components/ui/sonner";
 
 export function ThemeProvider({
   children,
@@ -48,6 +50,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
         disableTransitionOnChange
       >
         {children}
+        <Toaster richColors position="top-right" />
       </ThemeProvider>
       {NODE_ENV !== "production" && (
         <ReactQueryDevtools initialIsOpen={false} />

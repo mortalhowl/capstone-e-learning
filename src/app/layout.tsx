@@ -8,8 +8,11 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Cyber E-Learning",
-  description: "Nền tảng học trực tuyến",
+  title: {
+    template: "%s | Cyber E-Learning",
+    default: "Cyber E-Learning - Nền tảng học trực tuyến",
+  },
+  description: "Nền tảng học trực tuyến hàng đầu",
 };
 
 export default function RootLayout({
