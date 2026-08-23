@@ -30,7 +30,7 @@ interface CourseDetailTabsProps {
   course: Course;
 }
 
-const emptySubscribe = () => () => {};
+const emptySubscribe = () => () => { };
 
 export function CourseDetailTabs({ course }: CourseDetailTabsProps) {
   const user = useAuthStore((state) => state.user);
@@ -209,7 +209,6 @@ export function CourseDetailTabs({ course }: CourseDetailTabsProps) {
                     <TableHead className="w-16">STT</TableHead>
                     <TableHead>Họ tên học viên</TableHead>
                     <TableHead>Tài khoản</TableHead>
-                    <TableHead className="text-right">Trạng thái</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -223,11 +222,6 @@ export function CourseDetailTabs({ course }: CourseDetailTabsProps) {
                       </TableCell>
                       <TableCell className="text-muted-foreground text-xs">
                         {student.taiKhoan}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Badge variant="outline" className="text-[11px] font-normal text-emerald-600 dark:text-emerald-400 border-emerald-500/30 bg-emerald-500/10">
-                          Đang học
-                        </Badge>
                       </TableCell>
                     </TableRow>
                   ))}
