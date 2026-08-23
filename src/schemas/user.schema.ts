@@ -27,7 +27,7 @@ export type LoginResponse = z.infer<typeof LoginResponseSchema>;
 export const LoginSchema = z.object({
   taiKhoan: z
     .string()
-    .min(5, "Tài khoản phải có tối thiểu 5 ký tự")
+    .min(1, "Tài khoản phải có tối thiểu 1 ký tự")
     .max(30, "Tài khoản không được vượt quá 30 ký tự"),
   matKhau: z
     .string()
@@ -73,6 +73,31 @@ export const RegisterFormSchema = RegisterSchema.extend({
   path: ["xacNhanMatKhau"],
 });
 export type RegisterForm = z.infer<typeof RegisterFormSchema>;
+
+export const UpdateProfileSchema = RegisterSchema.omit({
+  matKhau: true,
+})
+  .extend({
+    taiKhoan: z.string().optional(),
+    maNhom: z.string().optional(),
+    maLoaiNguoiDung: z.string().optional(),
+    matKhau: z.string().optional(),
+    xacNhanMatKhau: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.matKhau && data.matKhau.length > 0) {
+        if (data.matKhau.length < 5) return false;
+        return data.matKhau === data.xacNhanMatKhau;
+      }
+      return true;
+    },
+    {
+      message: "Mật khẩu xác nhận không khớp (hoặc ít hơn 5 ký tự)",
+      path: ["xacNhanMatKhau"],
+    }
+  );
+export type UpdateProfileForm = z.infer<typeof UpdateProfileSchema>;
 
 export const RegisterResponseSchema = UserBasicSchema.omit({
   maLoaiNguoiDung: true,
