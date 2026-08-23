@@ -7,6 +7,7 @@ import { ChevronRight, Users, Eye, Calendar, Sparkles } from "lucide-react";
 import type { Course } from "@/schemas/course.schema";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { formatDate } from "@/lib/utils";
 
 interface CourseDetailHeroProps {
   course: Course;
@@ -18,20 +19,6 @@ export function CourseDetailHero({ course }: CourseDetailHeroProps) {
     const parts = name.trim().split(/\s+/);
     if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-  };
-
-  const formatDate = (dateStr: string) => {
-    if (!dateStr) return "";
-    try {
-      const date = new Date(dateStr);
-      if (isNaN(date.getTime())) return dateStr;
-      return new Intl.DateTimeFormat("vi-VN", {
-        month: "2-digit",
-        year: "numeric",
-      }).format(date);
-    } catch {
-      return dateStr;
-    }
   };
 
   const categoryName = course.danhMucKhoaHoc?.tenDanhMucKhoaHoc || "Lập trình";
