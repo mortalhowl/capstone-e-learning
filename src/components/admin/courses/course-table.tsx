@@ -35,6 +35,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { CourseTableSkeleton } from "@/components/admin/table-skeleton";
 import type { Course } from "@/schemas/course.schema";
 
 interface CourseTableProps {
@@ -68,57 +70,9 @@ export function CourseTable({
 
   // 1. Loading State (Hiển thị 6 dòng skeleton)
   if (isLoading) {
-    return (
-      <div className="rounded-lg border bg-card overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-muted/50">
-              <TableHead className="w-[320px]">Khóa học</TableHead>
-              <TableHead>Danh mục</TableHead>
-              <TableHead>Người tạo</TableHead>
-              <TableHead className="text-right">Học viên</TableHead>
-              <TableHead className="text-right">Lượt xem</TableHead>
-              <TableHead>Ngày tạo</TableHead>
-              <TableHead className="w-[70px] text-right">Thao tác</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {Array.from({ length: 6 }).map((_, index) => (
-              <TableRow key={`skeleton-${index}`}>
-                <TableCell>
-                  <div className="flex items-center gap-3">
-                    <Skeleton className="size-12 rounded-md shrink-0" />
-                    <div className="space-y-1.5 flex-1">
-                      <Skeleton className="h-4 w-3/4" />
-                      <Skeleton className="h-3 w-1/3" />
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Skeleton className="h-5 w-20 rounded-full" />
-                </TableCell>
-                <TableCell>
-                  <Skeleton className="h-4 w-24" />
-                </TableCell>
-                <TableCell className="text-right">
-                  <Skeleton className="h-4 w-12 ml-auto" />
-                </TableCell>
-                <TableCell className="text-right">
-                  <Skeleton className="h-4 w-12 ml-auto" />
-                </TableCell>
-                <TableCell>
-                  <Skeleton className="h-4 w-20" />
-                </TableCell>
-                <TableCell className="text-right">
-                  <Skeleton className="size-8 rounded-md ml-auto" />
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-    );
+    return <CourseTableSkeleton rowCount={6} />;
   }
+
 
   // 2. Empty State (Không tìm thấy dữ liệu)
   if (courses.length === 0) {

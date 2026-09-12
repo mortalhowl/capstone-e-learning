@@ -27,6 +27,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { UserTableSkeleton } from "@/components/admin/table-skeleton";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -65,49 +66,9 @@ export function UserTable({
 
   // 1. Loading State (Hiển thị Skeleton)
   if (isLoading) {
-    return (
-      <div className="rounded-lg border bg-card overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-muted/50">
-              <TableHead className="w-[280px]">Người dùng</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Số điện thoại</TableHead>
-              <TableHead>Vai trò</TableHead>
-              <TableHead className="w-[70px] text-right">Thao tác</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {Array.from({ length: 6 }).map((_, index) => (
-              <TableRow key={`skeleton-user-${index}`}>
-                <TableCell>
-                  <div className="flex items-center gap-3">
-                    <Skeleton className="size-9 rounded-full shrink-0" />
-                    <div className="space-y-1.5 flex-1">
-                      <Skeleton className="h-4 w-32" />
-                      <Skeleton className="h-3 w-20" />
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Skeleton className="h-4 w-40" />
-                </TableCell>
-                <TableCell>
-                  <Skeleton className="h-4 w-28" />
-                </TableCell>
-                <TableCell>
-                  <Skeleton className="h-5 w-24 rounded-full" />
-                </TableCell>
-                <TableCell className="text-right">
-                  <Skeleton className="size-8 rounded-md ml-auto" />
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-    );
+    return <UserTableSkeleton rowCount={6} />;
   }
+
 
   // 2. Empty State (Không tìm thấy kết quả)
   if (users.length === 0) {
