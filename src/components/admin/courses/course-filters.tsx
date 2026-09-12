@@ -12,6 +12,7 @@ interface CourseFiltersProps {
   isLoading?: boolean;
   onRefresh?: () => void;
   totalCount?: number;
+  onOpenCreateModal?: () => void;
 }
 
 export function CourseFilters({
@@ -21,6 +22,7 @@ export function CourseFilters({
   isLoading,
   onRefresh,
   totalCount,
+  onOpenCreateModal,
 }: CourseFiltersProps) {
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -67,7 +69,11 @@ export function CourseFilters({
           </Button>
         )}
 
-        <Button size="sm" className="h-9 gap-1.5 bg-primary text-primary-foreground">
+        <Button
+          size="sm"
+          onClick={onOpenCreateModal}
+          className="h-9 gap-1.5 bg-primary text-primary-foreground cursor-pointer"
+        >
           <Plus className="size-4" />
           <span>Thêm khóa học</span>
         </Button>

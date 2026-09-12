@@ -7,6 +7,7 @@ import {
   type CourseCategory,
   type EnrollStudent,
   type CourseRegisterPayload,
+  type CreateCoursePayload,
 } from "@/schemas/course.schema";
 import { createPaginatedResponse } from "@/schemas/api.schema";
 
@@ -76,4 +77,14 @@ export const courseService = {
 
   unenroll: (payload: CourseRegisterPayload) =>
     axiosInstance.post("/api/QuanLyKhoaHoc/HuyGhiDanh", payload),
+
+  createCourse: (payload: CreateCoursePayload) =>
+    axiosInstance.post("/api/QuanLyKhoaHoc/ThemKhoaHoc", payload),
+
+  createCourseWithImage: (formData: FormData) =>
+    axiosInstance.post("/api/QuanLyKhoaHoc/ThemKhoaHocUploadHinh", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }),
 };

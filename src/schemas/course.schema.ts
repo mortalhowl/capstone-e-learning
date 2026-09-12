@@ -54,3 +54,18 @@ export const CourseRegisterSchema = z.object({
   taiKhoan: z.string(),
 });
 export type CourseRegisterPayload = z.infer<typeof CourseRegisterSchema>;
+
+export const CreateCourseSchema = z.object({
+  maKhoaHoc: z.string().min(1, "Mã khóa học không được để trống"),
+  biDanh: z.string().min(1, "Bí danh không được để trống"),
+  tenKhoaHoc: z.string().min(5, "Tên khóa học phải có tối thiểu 5 ký tự"),
+  moTa: z.string().min(10, "Mô tả khóa học phải có tối thiểu 10 ký tự"),
+  luotXem: z.number().default(0),
+  danhGia: z.number().default(0),
+  hinhAnh: z.string().optional().default(""),
+  maNhom: z.string(),
+  ngayTao: z.string(),
+  maDanhMucKhoaHoc: z.string().min(1, "Vui lòng chọn danh mục khóa học"),
+  taiKhoanNguoiTao: z.string().min(1, "Tài khoản người tạo không được để trống"),
+});
+export type CreateCoursePayload = z.infer<typeof CreateCourseSchema>;

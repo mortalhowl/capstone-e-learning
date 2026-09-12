@@ -8,7 +8,10 @@ import type { AxiosError } from "axios";
 import { toast } from "sonner";
 
 import { courseService } from "@/services/course.service";
-import type { CourseRegisterPayload } from "@/schemas/course.schema";
+import type {
+  CourseRegisterPayload,
+  CreateCoursePayload,
+} from "@/schemas/course.schema";
 import { userKeys } from "./useUsers";
 
 export const courseKeys = {
@@ -103,6 +106,38 @@ export const useUnenroll = () => {
     },
     onError: (error: AxiosError<string>) => {
       toast.error(error.response?.data || "Hủy ghi danh thất bại!");
+    },
+  });
+};
+
+export const useCreateCourse = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: CreateCoursePayload) =>
+      courseService.createCourse(payload),
+    onSuccess: () => {
+      toast.success("Tạo khóa học thành công!");
+      queryClient.invalidateQueries({ queryKey: courseKeys.lists() });
+    },
+    onError: (error: AxiosError<string>) => {
+      toast.error(error.response?.data || "Tạo khóa học thất bại!");
+    },
+  });
+};
+
+export const useCreateCourseWithImage = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (formData: FormData) =>
+      courseService.createCourseWithImage(formData),
+    onSuccess: () => {
+      toast.success("Tạo khóa học và tải ảnh lên thành công!");
+      queryClient.invalidateQueries({ queryKey: courseKeys.lists() });
+    },
+    onError: (error: AxiosError<string>) => {
+      toast.error(error.response?.data || "Tạo khóa học thất bại!");
     },
   });
 };

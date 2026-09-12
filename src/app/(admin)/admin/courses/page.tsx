@@ -8,12 +8,14 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { CourseFilters } from "@/components/admin/courses/course-filters";
 import { CourseTable } from "@/components/admin/courses/course-table";
 import { CoursePagination } from "@/components/admin/courses/course-pagination";
+import { CreateCourseDialog } from "@/components/admin/courses/create-course-dialog";
 import { Button } from "@/components/ui/button";
 
 export default function AdminCoursesPage() {
-  // 1. Quản lý State: tìm kiếm và phân trang
+  // 1. Quản lý State: tìm kiếm, phân trang và dialog tạo mới
   const [searchTerm, setSearchTerm] = React.useState<string>("");
   const [page, setPage] = React.useState<number>(1);
+  const [isCreateOpen, setIsCreateOpen] = React.useState<boolean>(false);
   const pageSize = 10;
 
   // 2. Debounce từ khóa tìm kiếm (chờ 400ms sau khi người dùng dừng gõ)
@@ -63,6 +65,7 @@ export default function AdminCoursesPage() {
         isLoading={isFetching}
         onRefresh={() => refetch()}
         totalCount={totalCount}
+        onOpenCreateModal={() => setIsCreateOpen(true)}
       />
 
       {/* Thông báo lỗi nếu API gặp sự cố */}
@@ -104,6 +107,12 @@ export default function AdminCoursesPage() {
         pageSize={pageSize}
         onPageChange={(newPage) => setPage(newPage)}
         disabled={isFetching}
+      />
+
+      {/* Modal Dialog Tạo khóa học mới */}
+      <CreateCourseDialog
+        open={isCreateOpen}
+        onOpenChange={setIsCreateOpen}
       />
     </div>
   );
