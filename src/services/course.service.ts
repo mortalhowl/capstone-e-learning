@@ -81,13 +81,24 @@ export const courseService = {
       },
     ),
 
+  getPendingStudentsByCourse: (maKhoaHoc: string) =>
+    axiosInstance.post<Student[]>(
+      "/api/QuanLyNguoiDung/LayDanhSachHocVienChoXetDuyet",
+      {
+        maKhoaHoc,
+      },
+    ),
+
+  enrollCourse: (payload: CourseRegisterPayload) =>
+    axiosInstance.post("/api/QuanLyKhoaHoc/GhiDanhKhoaHoc", payload),
+
   // note: course regiser == enroll about meaning, but enroll should using with admin enroll
   courseRegister: (payload: CourseRegisterPayload) =>
-
     axiosInstance.post("/api/QuanLyKhoaHoc/DangKyKhoaHoc", payload),
 
   unenroll: (payload: CourseRegisterPayload) =>
     axiosInstance.post("/api/QuanLyKhoaHoc/HuyGhiDanh", payload),
+
 
   createCourse: (payload: CreateCoursePayload) =>
     axiosInstance.post("/api/QuanLyKhoaHoc/ThemKhoaHoc", payload),

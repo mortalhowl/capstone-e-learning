@@ -74,6 +74,65 @@ export const useStudentsByCourse = (maKhoaHoc: string, enabled = true) =>
     enabled: Boolean(maKhoaHoc) && enabled,
   });
 
+export const usePendingStudentsByCourse = (maKhoaHoc: string, enabled = true) =>
+  useQuery({
+    queryKey: ["pending-students", maKhoaHoc],
+    queryFn: () =>
+      courseService
+        .getPendingStudentsByCourse(maKhoaHoc)
+        .then((res) => res.data),
+    enabled: Boolean(maKhoaHoc) && enabled,
+  });
+
+export const useApproveEnrollment = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: CourseRegisterPayload) =>
+      courseService.enrollCourse(payload),
+    onSuccess: (_, payload) => {
+      toast.success("Duyệt ghi danh học viên thành công!");
+      queryClient.invalidateQueries({
+        queryKey: ["course-students", payload.maKhoaHoc],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["pending-students", payload.maKhoaHoc],
+      });
+      queryClient.invalidateQueries({
+        queryKey: courseKeys.detail(payload.maKhoaHoc),
+      });
+      queryClient.invalidateQueries({ queryKey: courseKeys.lists() });
+    },
+    onError: (error: AxiosError<string>) => {
+      toast.error(error.response?.data || "Duyệt ghi danh thất bại!");
+    },
+  });
+};
+
+export const useRejectEnrollment = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: CourseRegisterPayload) =>
+      courseService.unenroll(payload),
+    onSuccess: (_, payload) => {
+      toast.success("Đã từ chối ghi danh học viên!");
+      queryClient.invalidateQueries({
+        queryKey: ["course-students", payload.maKhoaHoc],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["pending-students", payload.maKhoaHoc],
+      });
+      queryClient.invalidateQueries({
+        queryKey: courseKeys.detail(payload.maKhoaHoc),
+      });
+      queryClient.invalidateQueries({ queryKey: courseKeys.lists() });
+    },
+    onError: (error: AxiosError<string>) => {
+      toast.error(error.response?.data || "Từ chối ghi danh thất bại!");
+    },
+  });
+};
 
 export const useCourseRegister = () => {
   const queryClient = useQueryClient();
@@ -89,6 +148,12 @@ export const useCourseRegister = () => {
       });
       queryClient.invalidateQueries({
         queryKey: ["enroll-student", payload.maKhoaHoc],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["course-students", payload.maKhoaHoc],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["pending-students", payload.maKhoaHoc],
       });
     },
     onError: (error: AxiosError<string>) => {
@@ -112,7 +177,14 @@ export const useUnenroll = () => {
       queryClient.invalidateQueries({
         queryKey: ["enroll-student", payload.maKhoaHoc],
       });
+      queryClient.invalidateQueries({
+        queryKey: ["course-students", payload.maKhoaHoc],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["pending-students", payload.maKhoaHoc],
+      });
     },
+
     onError: (error: AxiosError<string>) => {
       toast.error(error.response?.data || "Hủy ghi danh thất bại!");
     },
