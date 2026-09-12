@@ -87,4 +87,14 @@ export const courseService = {
         "Content-Type": "multipart/form-data",
       },
     }),
+
+  updateCourse: (payload: CreateCoursePayload) =>
+    axiosInstance.put("/api/QuanLyKhoaHoc/CapNhatKhoaHoc", payload),
+
+  updateCourseWithImage: (formData: FormData) =>
+    axiosInstance.post("/api/QuanLyKhoaHoc/CapNhatKhoaHocUpload", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }),
 };

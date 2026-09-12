@@ -141,3 +141,38 @@ export const useCreateCourseWithImage = () => {
     },
   });
 };
+
+export const useUpdateCourse = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: CreateCoursePayload) =>
+      courseService.updateCourse(payload),
+    onSuccess: (_, payload) => {
+      toast.success("Cập nhật khóa học thành công!");
+      queryClient.invalidateQueries({ queryKey: courseKeys.lists() });
+      queryClient.invalidateQueries({
+        queryKey: courseKeys.detail(payload.maKhoaHoc),
+      });
+    },
+    onError: (error: AxiosError<string>) => {
+      toast.error(error.response?.data || "Cập nhật khóa học thất bại!");
+    },
+  });
+};
+
+export const useUpdateCourseWithImage = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (formData: FormData) =>
+      courseService.updateCourseWithImage(formData),
+    onSuccess: () => {
+      toast.success("Cập nhật khóa học và tải ảnh lên thành công!");
+      queryClient.invalidateQueries({ queryKey: courseKeys.lists() });
+    },
+    onError: (error: AxiosError<string>) => {
+      toast.error(error.response?.data || "Cập nhật khóa học thất bại!");
+    },
+  });
+};
