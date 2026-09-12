@@ -1,4 +1,5 @@
 import axiosInstance from "@/lib/axios";
+import { MA_NHOM } from "@/lib/constants";
 import type {
   User,
   LoginPayload,
@@ -6,6 +7,7 @@ import type {
   Profile,
   LoginResponse,
   RegisterResponse,
+  PaginatedUser,
 } from "@/schemas/user.schema";
 
 export const userService = {
@@ -23,4 +25,17 @@ export const userService = {
 
   updateProfile: (payload: User) =>
     axiosInstance.put("/api/QuanLyNguoiDung/CapNhatThongTinNguoiDung", payload),
+
+  getPaginatedUsers: (tuKhoa = "", page = 1, pageSize = 10) =>
+    axiosInstance.get<PaginatedUser>(
+      "/api/QuanLyNguoiDung/LayDanhSachNguoiDung_PhanTrang",
+      {
+        params: {
+          MaNhom: MA_NHOM,
+          tuKhoa: tuKhoa || undefined,
+          page,
+          pageSize,
+        },
+      },
+    ),
 };

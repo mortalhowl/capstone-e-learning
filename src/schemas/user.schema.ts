@@ -1,5 +1,6 @@
 import z from "zod";
 import { CourseBasicSchema } from "./course.schema";
+import { createPaginatedResponse } from "./api.schema";
 
 export const UserBasicSchema = z.object({
   taiKhoan: z.string(),
@@ -103,3 +104,17 @@ export const RegisterResponseSchema = UserBasicSchema.omit({
   maLoaiNguoiDung: true,
 });
 export type RegisterResponse = z.infer<typeof RegisterResponseSchema>;
+
+export const UserItemSchema = z.object({
+  taiKhoan: z.string(),
+  hoTen: z.string(),
+  email: z.string(),
+  soDt: z.string().optional(),
+  soDT: z.string().optional(),
+  maLoaiNguoiDung: z.string(),
+  tenLoaiNguoiDung: z.string().optional(),
+});
+export type UserItem = z.infer<typeof UserItemSchema>;
+
+export const PaginatedUserSchema = createPaginatedResponse(UserItemSchema);
+export type PaginatedUser = z.infer<typeof PaginatedUserSchema>;

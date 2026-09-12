@@ -1,4 +1,9 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  keepPreviousData,
+} from "@tanstack/react-query";
 import type { AxiosError } from "axios";
 import { toast } from "sonner";
 
@@ -49,3 +54,13 @@ export const useUpdateProfile = () => {
     },
   });
 };
+
+export const usePaginatedUsers = (tuKhoa = "", page = 1, pageSize = 10) =>
+  useQuery({
+    queryKey: userKeys.list({ tuKhoa, page, pageSize }),
+    queryFn: () =>
+      userService
+        .getPaginatedUsers(tuKhoa, page, pageSize)
+        .then((res) => res.data),
+    placeholderData: keepPreviousData,
+  });
