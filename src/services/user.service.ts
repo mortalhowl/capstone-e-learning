@@ -9,6 +9,7 @@ import type {
   RegisterResponse,
   PaginatedUser,
   CreateUserPayload,
+  EditUserPayload,
 } from "@/schemas/user.schema";
 
 export const userService = {
@@ -42,4 +43,8 @@ export const userService = {
 
   createUser: (payload: CreateUserPayload) =>
     axiosInstance.post("/api/QuanLyNguoiDung/ThemNguoiDung", payload),
+
+  updateUser: (payload: EditUserPayload) =>
+    axiosInstance.put("/api/QuanLyNguoiDung/CapNhatThongTinNguoiDung", payload),
 };
+

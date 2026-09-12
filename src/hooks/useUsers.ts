@@ -14,6 +14,7 @@ import type {
   RegisterPayload,
   User,
   CreateUserPayload,
+  EditUserPayload,
 } from "@/schemas/user.schema";
 
 export const userKeys = {
@@ -84,3 +85,19 @@ export const useCreateUser = () => {
     },
   });
 };
+
+export const useUpdateUser = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: EditUserPayload) => userService.updateUser(payload),
+    onSuccess: () => {
+      toast.success("Cập nhật thông tin người dùng thành công!");
+      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+    },
+    onError: (error: AxiosError<string>) => {
+      toast.error(error.response?.data || "Cập nhật người dùng thất bại!");
+    },
+  });
+};
+

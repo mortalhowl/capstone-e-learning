@@ -147,3 +147,29 @@ export const CreateUserSchema = z.object({
     .email("Email không đúng định dạng"),
 });
 export type CreateUserPayload = z.infer<typeof CreateUserSchema>;
+
+export const EditUserSchema = z.object({
+  taiKhoan: z.string().min(1, "Tài khoản không được để trống"),
+  matKhau: z
+    .string()
+    .min(5, "Mật khẩu phải có tối thiểu 5 ký tự")
+    .max(30, "Mật khẩu không được vượt quá 30 ký tự"),
+  hoTen: z
+    .string()
+    .min(3, "Họ tên phải có tối thiểu 3 ký tự")
+    .max(50, "Họ tên không được vượt quá 50 ký tự"),
+  soDT: z
+    .string()
+    .regex(
+      /(84|0[3|5|7|8|9])+([0-9]{8})\b/,
+      "Số điện thoại không hợp lệ (phải gồm 10 chữ số)",
+    ),
+  maLoaiNguoiDung: z.string().min(1, "Vui lòng chọn vai trò người dùng"),
+  maNhom: z.string().min(1, "Mã nhóm không được để trống"),
+  email: z
+    .string()
+    .min(1, "Email không được để trống")
+    .email("Email không đúng định dạng"),
+});
+export type EditUserPayload = z.infer<typeof EditUserSchema>;
+

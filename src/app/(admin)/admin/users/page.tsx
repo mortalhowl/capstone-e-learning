@@ -9,15 +9,17 @@ import { UserFilters } from "@/components/admin/users/user-filters";
 import { UserTable } from "@/components/admin/users/user-table";
 import { UserPagination } from "@/components/admin/users/user-pagination";
 import { CreateUserDialog } from "@/components/admin/users/create-user-dialog";
+import { EditUserDialog } from "@/components/admin/users/edit-user-dialog";
 import { Button } from "@/components/ui/button";
 import type { UserItem } from "@/schemas/user.schema";
 
 export default function AdminUsersPage() {
-  // 1. Quản lý State: tìm kiếm, bộ lọc vai trò, phân trang và dialog tạo mới
+  // 1. Quản lý State: tìm kiếm, bộ lọc vai trò, phân trang và dialog tạo mới / chỉnh sửa
   const [searchTerm, setSearchTerm] = React.useState<string>("");
   const [roleFilter, setRoleFilter] = React.useState<string>("ALL");
   const [page, setPage] = React.useState<number>(1);
   const [isCreateOpen, setIsCreateOpen] = React.useState<boolean>(false);
+  const [editingUser, setEditingUser] = React.useState<UserItem | null>(null);
   const pageSize = 10;
 
   // 2. Debounce từ khóa tìm kiếm (400ms)
@@ -105,6 +107,7 @@ export default function AdminUsersPage() {
         isFetching={isFetching}
         onResetSearch={handleResetSearch}
         isFiltered={Boolean(debouncedSearch || roleFilter !== "ALL")}
+        onEditUser={setEditingUser}
       />
 
       {/* Thanh điều hướng phân trang */}
@@ -122,6 +125,14 @@ export default function AdminUsersPage() {
         open={isCreateOpen}
         onOpenChange={setIsCreateOpen}
       />
+
+      {/* Modal Dialog Chỉnh sửa người dùng */}
+      <EditUserDialog
+        user={editingUser}
+        open={Boolean(editingUser)}
+        onOpenChange={(open) => !open && setEditingUser(null)}
+      />
     </div>
   );
 }
+
