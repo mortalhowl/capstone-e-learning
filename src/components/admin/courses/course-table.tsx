@@ -13,6 +13,7 @@ import {
   UserPlus,
   BookOpen,
   AlertCircle,
+  ImagePlus,
 } from "lucide-react";
 
 import {
@@ -44,6 +45,7 @@ interface CourseTableProps {
   isFiltered?: boolean;
   onEditCourse?: (course: Course) => void;
   onDeleteCourse?: (course: Course) => void;
+  onUploadImage?: (course: Course) => void;
 }
 
 export function CourseTable({
@@ -54,6 +56,7 @@ export function CourseTable({
   isFiltered,
   onEditCourse,
   onDeleteCourse,
+  onUploadImage,
 }: CourseTableProps) {
   // State quản lý danh sách ảnh bị lỗi để fallback sang placeholder
   const [imageErrors, setImageErrors] = React.useState<Record<string, boolean>>({});
@@ -170,18 +173,25 @@ export function CourseTable({
                   {/* Cột 1: Thông tin khóa học */}
                   <TableCell>
                     <div className="flex items-center gap-3">
-                      <div className="relative size-12 rounded-md overflow-hidden bg-muted border shrink-0 flex items-center justify-center">
+                      <div
+                        onClick={() => onUploadImage?.(course)}
+                        className="relative size-12 rounded-md overflow-hidden bg-muted border shrink-0 flex items-center justify-center cursor-pointer group hover:ring-2 hover:ring-primary/50 transition-all"
+                        title="Nhấp để đổi ảnh bìa"
+                      >
                         {course.hinhAnh && !hasImgError ? (
                           <img
                             src={course.hinhAnh}
                             alt={course.tenKhoaHoc}
-                            className="size-full object-cover"
+                            className="size-full object-cover group-hover:opacity-80 transition-opacity"
                             onError={() => handleImageError(course.maKhoaHoc)}
                             loading="lazy"
                           />
                         ) : (
                           <BookOpen className="size-5 text-muted-foreground" />
                         )}
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                          <ImagePlus className="size-4 text-white drop-shadow-sm" />
+                        </div>
                       </div>
                       <div className="space-y-0.5 min-w-0">
                         <div
@@ -264,6 +274,13 @@ export function CourseTable({
                         <DropdownMenuItem className="gap-2 cursor-pointer">
                           <UserPlus className="size-4" />
                           <span>Ghi danh học viên</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="gap-2 cursor-pointer"
+                          onClick={() => onUploadImage?.(course)}
+                        >
+                          <ImagePlus className="size-4" />
+                          <span>Đổi ảnh bìa</span>
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           className="gap-2 cursor-pointer"

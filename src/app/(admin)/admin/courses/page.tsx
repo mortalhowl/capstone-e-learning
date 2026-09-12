@@ -11,16 +11,18 @@ import { CoursePagination } from "@/components/admin/courses/course-pagination";
 import { CreateCourseDialog } from "@/components/admin/courses/create-course-dialog";
 import { EditCourseDialog } from "@/components/admin/courses/edit-course-dialog";
 import { DeleteCourseDialog } from "@/components/admin/courses/delete-course-dialog";
+import { UploadCourseImageDialog } from "@/components/admin/courses/upload-course-image-dialog";
 import { Button } from "@/components/ui/button";
 import type { Course } from "@/schemas/course.schema";
 
 export default function AdminCoursesPage() {
-  // 1. Quản lý State: tìm kiếm, phân trang và dialog tạo / chỉnh sửa / xóa
+  // 1. Quản lý State: tìm kiếm, phân trang và các dialog
   const [searchTerm, setSearchTerm] = React.useState<string>("");
   const [page, setPage] = React.useState<number>(1);
   const [isCreateOpen, setIsCreateOpen] = React.useState<boolean>(false);
   const [editingCourse, setEditingCourse] = React.useState<Course | null>(null);
   const [deletingCourse, setDeletingCourse] = React.useState<Course | null>(null);
+  const [uploadingCourse, setUploadingCourse] = React.useState<Course | null>(null);
   const pageSize = 10;
 
   // 2. Debounce từ khóa tìm kiếm (chờ 400ms sau khi người dùng dừng gõ)
@@ -104,6 +106,7 @@ export default function AdminCoursesPage() {
         isFiltered={Boolean(debouncedSearch)}
         onEditCourse={setEditingCourse}
         onDeleteCourse={setDeletingCourse}
+        onUploadImage={setUploadingCourse}
       />
 
       {/* Thanh điều khiển phân trang */}
@@ -134,6 +137,13 @@ export default function AdminCoursesPage() {
         course={deletingCourse}
         open={Boolean(deletingCourse)}
         onOpenChange={(open) => !open && setDeletingCourse(null)}
+      />
+
+      {/* Modal Dialog Đổi ảnh bìa khóa học */}
+      <UploadCourseImageDialog
+        course={uploadingCourse}
+        open={Boolean(uploadingCourse)}
+        onOpenChange={(open) => !open && setUploadingCourse(null)}
       />
     </div>
   );

@@ -191,3 +191,19 @@ export const useDeleteCourse = () => {
     },
   });
 };
+
+export const useUploadCourseImage = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (formData: FormData) =>
+      courseService.uploadCourseImage(formData),
+    onSuccess: () => {
+      toast.success("Tải lên hình ảnh khóa học thành công!");
+      queryClient.invalidateQueries({ queryKey: courseKeys.lists() });
+    },
+    onError: (error: AxiosError<string>) => {
+      toast.error(error.response?.data || "Tải lên hình ảnh thất bại!");
+    },
+  });
+};

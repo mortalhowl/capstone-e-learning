@@ -104,4 +104,11 @@ export const courseService = {
         MaKhoaHoc: maKhoaHoc,
       },
     }),
+
+  uploadCourseImage: (formData: FormData) =>
+    axiosInstance.post("/api/QuanLyKhoaHoc/UploadHinhAnhKhoaHoc", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }),
 };
