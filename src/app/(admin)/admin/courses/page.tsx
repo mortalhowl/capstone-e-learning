@@ -10,15 +10,17 @@ import { CourseTable } from "@/components/admin/courses/course-table";
 import { CoursePagination } from "@/components/admin/courses/course-pagination";
 import { CreateCourseDialog } from "@/components/admin/courses/create-course-dialog";
 import { EditCourseDialog } from "@/components/admin/courses/edit-course-dialog";
+import { DeleteCourseDialog } from "@/components/admin/courses/delete-course-dialog";
 import { Button } from "@/components/ui/button";
 import type { Course } from "@/schemas/course.schema";
 
 export default function AdminCoursesPage() {
-  // 1. Quản lý State: tìm kiếm, phân trang và dialog tạo / chỉnh sửa
+  // 1. Quản lý State: tìm kiếm, phân trang và dialog tạo / chỉnh sửa / xóa
   const [searchTerm, setSearchTerm] = React.useState<string>("");
   const [page, setPage] = React.useState<number>(1);
   const [isCreateOpen, setIsCreateOpen] = React.useState<boolean>(false);
   const [editingCourse, setEditingCourse] = React.useState<Course | null>(null);
+  const [deletingCourse, setDeletingCourse] = React.useState<Course | null>(null);
   const pageSize = 10;
 
   // 2. Debounce từ khóa tìm kiếm (chờ 400ms sau khi người dùng dừng gõ)
@@ -101,6 +103,7 @@ export default function AdminCoursesPage() {
         onResetSearch={handleResetSearch}
         isFiltered={Boolean(debouncedSearch)}
         onEditCourse={setEditingCourse}
+        onDeleteCourse={setDeletingCourse}
       />
 
       {/* Thanh điều khiển phân trang */}
@@ -124,6 +127,13 @@ export default function AdminCoursesPage() {
         course={editingCourse}
         open={Boolean(editingCourse)}
         onOpenChange={(open) => !open && setEditingCourse(null)}
+      />
+
+      {/* Modal Dialog Xác nhận xóa khóa học */}
+      <DeleteCourseDialog
+        course={deletingCourse}
+        open={Boolean(deletingCourse)}
+        onOpenChange={(open) => !open && setDeletingCourse(null)}
       />
     </div>
   );

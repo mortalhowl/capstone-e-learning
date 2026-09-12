@@ -176,3 +176,18 @@ export const useUpdateCourseWithImage = () => {
     },
   });
 };
+
+export const useDeleteCourse = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (maKhoaHoc: string) => courseService.deleteCourse(maKhoaHoc),
+    onSuccess: () => {
+      toast.success("Xóa khóa học thành công!");
+      queryClient.invalidateQueries({ queryKey: courseKeys.lists() });
+    },
+    onError: (error: AxiosError<string>) => {
+      toast.error(error.response?.data || "Xóa khóa học thất bại!");
+    },
+  });
+};

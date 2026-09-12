@@ -97,4 +97,11 @@ export const courseService = {
         "Content-Type": "multipart/form-data",
       },
     }),
+
+  deleteCourse: (maKhoaHoc: string) =>
+    axiosInstance.delete("/api/QuanLyKhoaHoc/XoaKhoaHoc", {
+      params: {
+        MaKhoaHoc: maKhoaHoc,
+      },
+    }),
 };

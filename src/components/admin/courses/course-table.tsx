@@ -43,6 +43,7 @@ interface CourseTableProps {
   onResetSearch?: () => void;
   isFiltered?: boolean;
   onEditCourse?: (course: Course) => void;
+  onDeleteCourse?: (course: Course) => void;
 }
 
 export function CourseTable({
@@ -52,6 +53,7 @@ export function CourseTable({
   onResetSearch,
   isFiltered,
   onEditCourse,
+  onDeleteCourse,
 }: CourseTableProps) {
   // State quản lý danh sách ảnh bị lỗi để fallback sang placeholder
   const [imageErrors, setImageErrors] = React.useState<Record<string, boolean>>({});
@@ -274,6 +276,7 @@ export function CourseTable({
                         <DropdownMenuItem
                           variant="destructive"
                           className="gap-2 cursor-pointer text-destructive focus:text-destructive"
+                          onClick={() => onDeleteCourse?.(course)}
                         >
                           <Trash2 className="size-4" />
                           <span>Xóa khóa học</span>
