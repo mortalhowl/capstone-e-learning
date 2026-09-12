@@ -42,7 +42,7 @@ export const courseService = {
 
   getPaginatedCourse: (tenKhoaHoc = "", page = 1, pageSize = 10) =>
     axiosInstance.get<PaginatedCourse>(
-      "/api/QuanLyKhoaHoc/LayKhoaHocTheoDanhMuc",
+      "/api/QuanLyKhoaHoc/LayDanhSachKhoaHoc_PhanTrang",
       {
         params: {
           tenKhoaHoc: tenKhoaHoc || undefined,

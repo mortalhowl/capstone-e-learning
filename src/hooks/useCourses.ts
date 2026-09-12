@@ -1,4 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import type { AxiosError } from "axios";
 import { toast } from "sonner";
 
@@ -27,6 +32,7 @@ export const usePaginatedCourse = (tenKhoaHoc = "", page = 1, pageSize = 10) =>
       courseService
         .getPaginatedCourse(tenKhoaHoc, page, pageSize)
         .then((res) => res.data),
+    placeholderData: keepPreviousData,
   });
 
 export const useCourse = (maKhoaHoc = "") =>
