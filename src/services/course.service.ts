@@ -6,9 +6,11 @@ import {
   type Course,
   type CourseCategory,
   type EnrollStudent,
+  type Student,
   type CourseRegisterPayload,
   type CreateCoursePayload,
 } from "@/schemas/course.schema";
+
 import { createPaginatedResponse } from "@/schemas/api.schema";
 
 export const PaginatedCourseSchema = createPaginatedResponse(CourseSchema);
@@ -71,8 +73,17 @@ export const courseService = {
       },
     ),
 
+  getStudentsByCourse: (maKhoaHoc: string) =>
+    axiosInstance.post<Student[]>(
+      "/api/QuanLyNguoiDung/LayDanhSachHocVienKhoaHoc",
+      {
+        maKhoaHoc,
+      },
+    ),
+
   // note: course regiser == enroll about meaning, but enroll should using with admin enroll
   courseRegister: (payload: CourseRegisterPayload) =>
+
     axiosInstance.post("/api/QuanLyKhoaHoc/DangKyKhoaHoc", payload),
 
   unenroll: (payload: CourseRegisterPayload) =>

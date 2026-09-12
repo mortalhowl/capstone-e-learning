@@ -66,6 +66,15 @@ export const useEnrollStudent = (maKhoaHoc: string, enabled = true) =>
     enabled: Boolean(maKhoaHoc) && enabled,
   });
 
+export const useStudentsByCourse = (maKhoaHoc: string, enabled = true) =>
+  useQuery({
+    queryKey: ["course-students", maKhoaHoc],
+    queryFn: () =>
+      courseService.getStudentsByCourse(maKhoaHoc).then((res) => res.data),
+    enabled: Boolean(maKhoaHoc) && enabled,
+  });
+
+
 export const useCourseRegister = () => {
   const queryClient = useQueryClient();
 

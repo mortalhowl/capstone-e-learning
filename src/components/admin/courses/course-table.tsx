@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Image from "next/image";
+import Link from "next/link";
 import {
   Eye,
   Users,
@@ -271,14 +272,24 @@ export function CourseTable({
                           <ExternalLink className="size-4" />
                           <span>Xem chi tiết</span>
                         </DropdownMenuItem>
-                        <DropdownMenuItem className="gap-2 cursor-pointer">
-                          <UserPlus className="size-4" />
-                          <span>Ghi danh học viên</span>
+                        <DropdownMenuItem
+                          className="gap-2 cursor-pointer"
+                          render={
+                            <Link
+                              href={`/admin/enrollments?courseId=${encodeURIComponent(
+                                course.maKhoaHoc,
+                              )}`}
+                            />
+                          }
+                        >
+                          <Users className="size-4" />
+                          <span>Quản lý học viên</span>
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           className="gap-2 cursor-pointer"
                           onClick={() => onUploadImage?.(course)}
                         >
+
                           <ImagePlus className="size-4" />
                           <span>Đổi ảnh bìa</span>
                         </DropdownMenuItem>
