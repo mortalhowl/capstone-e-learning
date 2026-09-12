@@ -251,37 +251,40 @@ function EnrollmentContent() {
       {/* Tabs Quản lý Học viên: Đã ghi danh / Chờ duyệt / Chưa ghi danh */}
       {selectedCourseId ? (
         <Tabs defaultValue="enrolled" className="space-y-4">
-          <TabsList className="h-10 p-1 bg-muted">
-            <TabsTrigger value="enrolled" className="gap-2 px-3">
-              <UserCheck className="size-4" />
-              <span>Đã ghi danh</span>
-              <span className="ml-1 rounded-full bg-background px-2 py-0.5 text-xs font-semibold shadow-xs">
-                {students.length}
-              </span>
-            </TabsTrigger>
+          <div className="overflow-x-auto pb-1">
+            <TabsList className="h-10 p-1 bg-muted w-full justify-start sm:justify-center min-w-[360px]">
+              <TabsTrigger value="enrolled" className="gap-2 px-3 text-xs sm:text-sm">
+                <UserCheck className="size-4" />
+                <span>Đã ghi danh</span>
+                <span className="ml-1 rounded-full bg-background px-2 py-0.5 text-xs font-semibold shadow-xs">
+                  {students.length}
+                </span>
+              </TabsTrigger>
 
-            <TabsTrigger value="pending" className="gap-2 px-3">
-              <Clock className="size-4" />
-              <span>Chờ xét duyệt</span>
-              <span
-                className={`ml-1 rounded-full px-2 py-0.5 text-xs font-semibold shadow-xs ${
-                  pendingStudents.length > 0
-                    ? "bg-amber-500 text-white animate-pulse"
-                    : "bg-background text-muted-foreground"
-                }`}
-              >
-                {pendingStudents.length}
-              </span>
-            </TabsTrigger>
+              <TabsTrigger value="pending" className="gap-2 px-3 text-xs sm:text-sm">
+                <Clock className="size-4" />
+                <span>Chờ xét duyệt</span>
+                <span
+                  className={`ml-1 rounded-full px-2 py-0.5 text-xs font-semibold shadow-xs ${
+                    pendingStudents.length > 0
+                      ? "bg-amber-500 text-white animate-pulse"
+                      : "bg-background text-muted-foreground"
+                  }`}
+                >
+                  {pendingStudents.length}
+                </span>
+              </TabsTrigger>
 
-            <TabsTrigger value="unenrolled" className="gap-2 px-3">
-              <Users className="size-4" />
-              <span>Chưa ghi danh</span>
-              <span className="ml-1 rounded-full bg-background px-2 py-0.5 text-xs font-semibold shadow-xs">
-                {unenrolledUsers.length}
-              </span>
-            </TabsTrigger>
-          </TabsList>
+              <TabsTrigger value="unenrolled" className="gap-2 px-3 text-xs sm:text-sm">
+                <Users className="size-4" />
+                <span>Chưa ghi danh</span>
+                <span className="ml-1 rounded-full bg-background px-2 py-0.5 text-xs font-semibold shadow-xs">
+                  {unenrolledUsers.length}
+                </span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
+
 
           {/* Tab 1: Đã ghi danh */}
           <TabsContent value="enrolled">

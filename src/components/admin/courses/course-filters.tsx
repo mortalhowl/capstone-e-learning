@@ -27,7 +27,7 @@ export function CourseFilters({
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       {/* Search Input Box */}
-      <div className="relative flex-1 max-w-md">
+      <div className="relative w-full sm:max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
         <Input
           placeholder="Tìm kiếm theo tên khóa học..."
@@ -48,7 +48,7 @@ export function CourseFilters({
       </div>
 
       {/* Action Buttons */}
-      <div className="flex items-center gap-2 self-end sm:self-auto">
+      <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
         {typeof totalCount === "number" && (
           <span className="text-xs text-muted-foreground hidden md:inline-block mr-2">
             Tổng cộng: <strong className="text-foreground">{totalCount}</strong> khóa học
@@ -61,7 +61,7 @@ export function CourseFilters({
             size="sm"
             onClick={onRefresh}
             disabled={isLoading}
-            className="h-9 gap-1.5"
+            className="h-9 gap-1.5 shrink-0"
             title="Tải lại danh sách"
           >
             <RefreshCw className={`size-3.5 ${isLoading ? "animate-spin" : ""}`} />
@@ -72,12 +72,13 @@ export function CourseFilters({
         <Button
           size="sm"
           onClick={onOpenCreateModal}
-          className="h-9 gap-1.5 bg-primary text-primary-foreground cursor-pointer"
+          className="h-9 gap-1.5 bg-primary text-primary-foreground cursor-pointer flex-1 sm:flex-initial"
         >
           <Plus className="size-4" />
           <span>Thêm khóa học</span>
         </Button>
       </div>
     </div>
+
   );
 }

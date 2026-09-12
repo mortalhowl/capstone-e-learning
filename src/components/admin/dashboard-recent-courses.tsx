@@ -95,44 +95,47 @@ export function DashboardRecentCourses() {
         </div>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Course</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead className="text-right">Students</TableHead>
-              <TableHead className="text-right">Views</TableHead>
-              <TableHead className="text-right">Created</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {MOCK_RECENT_COURSES.map((course) => (
-              <TableRow key={course.maKhoaHoc}>
-                <TableCell>
-                  <div>
-                    <p className="font-medium">{course.tenKhoaHoc}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {course.nguoiTao}
-                    </p>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Badge variant="secondary">{course.danhMuc}</Badge>
-                </TableCell>
-                <TableCell className="text-right">
-                  {course.soLuongHocVien.toLocaleString()}
-                </TableCell>
-                <TableCell className="text-right">
-                  {course.luotXem.toLocaleString()}
-                </TableCell>
-                <TableCell className="text-right text-muted-foreground">
-                  {course.ngayTao}
-                </TableCell>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Course</TableHead>
+                <TableHead>Category</TableHead>
+                <TableHead className="text-right">Students</TableHead>
+                <TableHead className="text-right">Views</TableHead>
+                <TableHead className="text-right">Created</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {MOCK_RECENT_COURSES.map((course) => (
+                <TableRow key={course.maKhoaHoc}>
+                  <TableCell>
+                    <div>
+                      <p className="font-medium">{course.tenKhoaHoc}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {course.nguoiTao}
+                      </p>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="secondary">{course.danhMuc}</Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {course.soLuongHocVien.toLocaleString()}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {course.luotXem.toLocaleString()}
+                  </TableCell>
+                  <TableCell className="text-right text-muted-foreground">
+                    {course.ngayTao}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </CardContent>
+
     </Card>
   );
 }

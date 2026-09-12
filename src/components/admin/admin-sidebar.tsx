@@ -49,7 +49,9 @@ import {
   SidebarMenuSubItem,
   SidebarRail,
   SidebarSeparator,
+  useSidebar,
 } from "@/components/ui/sidebar";
+
 import {
   Collapsible,
   CollapsibleContent,
@@ -197,6 +199,13 @@ const NAV_GROUPS: NavGroup[] = [
 export function AdminSidebar() {
   const pathname = usePathname();
   const user = useAuthStore((state) => state.user);
+  const { isMobile, setOpenMobile } = useSidebar();
+
+  const handleNavClick = React.useCallback(() => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  }, [isMobile, setOpenMobile]);
 
   // Kiểm tra xem một URL có đang active không
   // So sánh chính xác cho trang chính, startsWith cho sub-pages
@@ -217,7 +226,11 @@ export function AdminSidebar() {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" render={<Link href="/admin" />} tooltip="Admin Dashboard">
+            <SidebarMenuButton
+              size="lg"
+              render={<Link href="/admin" onClick={handleNavClick} />}
+              tooltip="Admin Dashboard"
+            >
               <div className="flex items-center justify-center size-8 rounded-lg bg-primary text-primary-foreground">
                 <LogoIcon className="size-4" />
               </div>
@@ -247,12 +260,13 @@ export function AdminSidebar() {
                       item={item}
                       isActive={isActive}
                       defaultOpen={isGroupActive(item.items)}
+                      onNavClick={handleNavClick}
                     />
                   ) : (
                     // Menu đơn → link trực tiếp
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton
-                        render={<Link href={item.url} />}
+                        render={<Link href={item.url} onClick={handleNavClick} />}
                         isActive={isActive(item.url)}
                         tooltip={item.title}
                       >
@@ -267,6 +281,7 @@ export function AdminSidebar() {
           </SidebarGroup>
         ))}
       </SidebarContent>
+
 
       {/* ── Footer: User Info ── */}
       <SidebarFooter>
@@ -304,12 +319,14 @@ interface CollapsibleNavItemProps {
   item: NavItem & { items?: NavItem[] };
   isActive: (url: string) => boolean;
   defaultOpen: boolean;
+  onNavClick?: () => void;
 }
 
 function CollapsibleNavItem({
   item,
   isActive,
   defaultOpen,
+  onNavClick,
 }: CollapsibleNavItemProps) {
   return (
     <Collapsible defaultOpen={defaultOpen} className="group/collapsible">
@@ -324,7 +341,7 @@ function CollapsibleNavItem({
             {item.items?.map((subItem) => (
               <SidebarMenuSubItem key={subItem.title}>
                 <SidebarMenuSubButton
-                  render={<Link href={subItem.url} />}
+                  render={<Link href={subItem.url} onClick={onNavClick} />}
                   isActive={isActive(subItem.url)}
                 >
                   <span>{subItem.title}</span>
@@ -337,3 +354,4 @@ function CollapsibleNavItem({
     </Collapsible>
   );
 }
+

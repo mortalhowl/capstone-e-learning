@@ -68,7 +68,7 @@ export function UserFilters({
       </div>
 
       {/* Action Buttons */}
-      <div className="flex items-center gap-2 self-end lg:self-auto">
+      <div className="flex items-center justify-between sm:justify-end gap-2 w-full lg:w-auto">
         {typeof totalCount === "number" && (
           <span className="text-xs text-muted-foreground hidden md:inline-block mr-2">
             Tổng số: <strong className="text-foreground">{totalCount}</strong> tài khoản
@@ -81,7 +81,7 @@ export function UserFilters({
             size="sm"
             onClick={onRefresh}
             disabled={isLoading}
-            className="h-9 gap-1.5"
+            className="h-9 gap-1.5 shrink-0"
             title="Làm mới danh sách"
           >
             <RefreshCw className={`size-3.5 ${isLoading ? "animate-spin" : ""}`} />
@@ -92,12 +92,13 @@ export function UserFilters({
         <Button
           size="sm"
           onClick={onOpenCreateModal}
-          className="h-9 gap-1.5 bg-primary text-primary-foreground cursor-pointer"
+          className="h-9 gap-1.5 bg-primary text-primary-foreground cursor-pointer flex-1 sm:flex-initial"
         >
           <Plus className="size-4" />
           <span>Thêm người dùng</span>
         </Button>
       </div>
     </div>
+
   );
 }

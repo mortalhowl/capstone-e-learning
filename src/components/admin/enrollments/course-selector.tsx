@@ -52,7 +52,7 @@ export function CourseSelector({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-[220px] overflow-y-auto p-1 border rounded-lg bg-muted/20">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-[220px] overflow-y-auto p-1 border rounded-lg bg-muted/20">
         {isLoading ? (
           <div className="col-span-full py-8 text-center text-sm text-muted-foreground">
             Đang tải danh sách khóa học...

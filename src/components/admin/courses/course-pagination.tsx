@@ -71,21 +71,28 @@ export function CoursePagination({
       </div>
 
       {/* Điều hướng trang */}
-      <div className="flex items-center gap-1">
+      <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
         {/* Nút Trước (Previous) */}
         <Button
           variant="outline"
           size="sm"
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage <= 1 || disabled}
-          className="h-8 px-2 text-xs gap-1"
+          className="h-8 px-2.5 text-xs gap-1"
         >
           <ChevronLeft className="size-3.5" />
-          <span className="hidden sm:inline">Trước</span>
+          <span>Trước</span>
         </Button>
 
-        {/* Các nút số trang */}
-        <div className="flex items-center gap-1">
+        {/* Chế độ hiển thị trên Mobile: Trang X / Y */}
+        <div className="flex sm:hidden items-center text-xs font-medium text-muted-foreground px-2">
+          <span>
+            Trang <strong className="text-foreground">{currentPage}</strong> / {totalPages}
+          </span>
+        </div>
+
+        {/* Các nút số trang trên Desktop */}
+        <div className="hidden sm:flex items-center gap-1">
           {pageNumbers.map((pageNum, idx) => {
             if (pageNum === "ellipsis") {
               return (
@@ -122,12 +129,13 @@ export function CoursePagination({
           size="sm"
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage >= totalPages || disabled}
-          className="h-8 px-2 text-xs gap-1"
+          className="h-8 px-2.5 text-xs gap-1"
         >
-          <span className="hidden sm:inline">Sau</span>
+          <span>Sau</span>
           <ChevronRight className="size-3.5" />
         </Button>
       </div>
+
     </div>
   );
 }

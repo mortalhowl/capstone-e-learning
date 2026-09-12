@@ -80,18 +80,18 @@ export function AdminHeader() {
       <div className="flex items-center gap-2 flex-1 min-w-0">
         <SidebarTrigger />
         <Separator orientation="vertical" className="h-4" />
-        <nav className="flex items-center gap-1 text-sm min-w-0">
+        <nav className="flex items-center gap-1 text-xs sm:text-sm min-w-0">
           {breadcrumbs.map((crumb) => (
             <React.Fragment key={crumb.href}>
               {crumb.href !== breadcrumbs[0]?.href && (
-                <ChevronRight className="size-3 text-muted-foreground shrink-0" />
+                <ChevronRight className="size-3 text-muted-foreground shrink-0 hidden sm:inline-block" />
               )}
               {crumb.isLast ? (
-                <span className="font-medium truncate">{crumb.label}</span>
+                <span className="font-medium truncate text-foreground">{crumb.label}</span>
               ) : (
                 <Link
                   href={crumb.href}
-                  className="text-muted-foreground hover:text-foreground transition-colors truncate"
+                  className="text-muted-foreground hover:text-foreground transition-colors truncate hidden sm:inline-block"
                 >
                   {crumb.label}
                 </Link>
@@ -102,7 +102,8 @@ export function AdminHeader() {
       </div>
 
       {/* Right side: Theme toggle + User dropdown */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+
         <ToggleTheme />
         <DropdownMenu>
           <DropdownMenuTrigger
