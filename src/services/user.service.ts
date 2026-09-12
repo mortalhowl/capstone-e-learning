@@ -46,5 +46,11 @@ export const userService = {
 
   updateUser: (payload: EditUserPayload) =>
     axiosInstance.put("/api/QuanLyNguoiDung/CapNhatThongTinNguoiDung", payload),
+
+  deleteUser: (taiKhoan: string) =>
+    axiosInstance.delete("/api/QuanLyNguoiDung/XoaNguoiDung", {
+      params: { TaiKhoan: taiKhoan },
+    }),
 };
+
 

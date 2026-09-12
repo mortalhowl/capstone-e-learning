@@ -101,3 +101,19 @@ export const useUpdateUser = () => {
   });
 };
 
+export const useDeleteUser = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (taiKhoan: string) => userService.deleteUser(taiKhoan),
+    onSuccess: () => {
+      toast.success("Xóa người dùng thành công!");
+      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+    },
+    onError: (error: AxiosError<string>) => {
+      toast.error(error.response?.data || "Xóa người dùng thất bại!");
+    },
+  });
+};
+
+

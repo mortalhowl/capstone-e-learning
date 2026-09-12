@@ -10,16 +10,18 @@ import { UserTable } from "@/components/admin/users/user-table";
 import { UserPagination } from "@/components/admin/users/user-pagination";
 import { CreateUserDialog } from "@/components/admin/users/create-user-dialog";
 import { EditUserDialog } from "@/components/admin/users/edit-user-dialog";
+import { DeleteUserDialog } from "@/components/admin/users/delete-user-dialog";
 import { Button } from "@/components/ui/button";
 import type { UserItem } from "@/schemas/user.schema";
 
 export default function AdminUsersPage() {
-  // 1. Quản lý State: tìm kiếm, bộ lọc vai trò, phân trang và dialog tạo mới / chỉnh sửa
+  // 1. Quản lý State: tìm kiếm, bộ lọc vai trò, phân trang và dialog tạo mới / chỉnh sửa / xóa
   const [searchTerm, setSearchTerm] = React.useState<string>("");
   const [roleFilter, setRoleFilter] = React.useState<string>("ALL");
   const [page, setPage] = React.useState<number>(1);
   const [isCreateOpen, setIsCreateOpen] = React.useState<boolean>(false);
   const [editingUser, setEditingUser] = React.useState<UserItem | null>(null);
+  const [deletingUser, setDeletingUser] = React.useState<UserItem | null>(null);
   const pageSize = 10;
 
   // 2. Debounce từ khóa tìm kiếm (400ms)
@@ -108,6 +110,7 @@ export default function AdminUsersPage() {
         onResetSearch={handleResetSearch}
         isFiltered={Boolean(debouncedSearch || roleFilter !== "ALL")}
         onEditUser={setEditingUser}
+        onDeleteUser={setDeletingUser}
       />
 
       {/* Thanh điều hướng phân trang */}
@@ -132,7 +135,15 @@ export default function AdminUsersPage() {
         open={Boolean(editingUser)}
         onOpenChange={(open) => !open && setEditingUser(null)}
       />
+
+      {/* Modal Dialog Xác nhận xóa người dùng */}
+      <DeleteUserDialog
+        user={deletingUser}
+        open={Boolean(deletingUser)}
+        onOpenChange={(open) => !open && setDeletingUser(null)}
+      />
     </div>
   );
 }
+
 
