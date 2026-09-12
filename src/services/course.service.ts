@@ -89,8 +89,17 @@ export const courseService = {
       },
     ),
 
+  getUnenrolledUsersByCourse: (maKhoaHoc: string) =>
+    axiosInstance.post<Student[]>(
+      "/api/QuanLyNguoiDung/LayDanhSachNguoiDungChuaGhiDanh",
+      {
+        maKhoaHoc,
+      },
+    ),
+
   enrollCourse: (payload: CourseRegisterPayload) =>
     axiosInstance.post("/api/QuanLyKhoaHoc/GhiDanhKhoaHoc", payload),
+
 
   // note: course regiser == enroll about meaning, but enroll should using with admin enroll
   courseRegister: (payload: CourseRegisterPayload) =>

@@ -84,6 +84,44 @@ export const usePendingStudentsByCourse = (maKhoaHoc: string, enabled = true) =>
     enabled: Boolean(maKhoaHoc) && enabled,
   });
 
+export const useUnenrolledUsersByCourse = (maKhoaHoc: string, enabled = true) =>
+  useQuery({
+    queryKey: ["unenrolled-users", maKhoaHoc],
+    queryFn: () =>
+      courseService
+        .getUnenrolledUsersByCourse(maKhoaHoc)
+        .then((res) => res.data),
+    enabled: Boolean(maKhoaHoc) && enabled,
+  });
+
+export const useEnrollUser = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: CourseRegisterPayload) =>
+      courseService.enrollCourse(payload),
+    onSuccess: (_, payload) => {
+      toast.success("Ghi danh học viên thành công!");
+      queryClient.invalidateQueries({
+        queryKey: ["course-students", payload.maKhoaHoc],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["pending-students", payload.maKhoaHoc],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["unenrolled-users", payload.maKhoaHoc],
+      });
+      queryClient.invalidateQueries({
+        queryKey: courseKeys.detail(payload.maKhoaHoc),
+      });
+      queryClient.invalidateQueries({ queryKey: courseKeys.lists() });
+    },
+    onError: (error: AxiosError<string>) => {
+      toast.error(error.response?.data || "Ghi danh học viên thất bại!");
+    },
+  });
+};
+
 export const useApproveEnrollment = () => {
   const queryClient = useQueryClient();
 
@@ -97,6 +135,9 @@ export const useApproveEnrollment = () => {
       });
       queryClient.invalidateQueries({
         queryKey: ["pending-students", payload.maKhoaHoc],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["unenrolled-users", payload.maKhoaHoc],
       });
       queryClient.invalidateQueries({
         queryKey: courseKeys.detail(payload.maKhoaHoc),
@@ -124,6 +165,9 @@ export const useRejectEnrollment = () => {
         queryKey: ["pending-students", payload.maKhoaHoc],
       });
       queryClient.invalidateQueries({
+        queryKey: ["unenrolled-users", payload.maKhoaHoc],
+      });
+      queryClient.invalidateQueries({
         queryKey: courseKeys.detail(payload.maKhoaHoc),
       });
       queryClient.invalidateQueries({ queryKey: courseKeys.lists() });
@@ -133,6 +177,7 @@ export const useRejectEnrollment = () => {
     },
   });
 };
+
 
 export const useCourseRegister = () => {
   const queryClient = useQueryClient();

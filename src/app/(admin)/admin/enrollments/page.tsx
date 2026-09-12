@@ -10,6 +10,8 @@ import {
   RefreshCw,
   Clock,
   UserCheck,
+  UserPlus,
+  Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -18,13 +20,17 @@ import {
   useCourses,
   useStudentsByCourse,
   usePendingStudentsByCourse,
+  useUnenrolledUsersByCourse,
   useApproveEnrollment,
   useRejectEnrollment,
+  useEnrollUser,
   useUnenroll,
 } from "@/hooks/useCourses";
 import { CourseSelector } from "@/components/admin/enrollments/course-selector";
 import { EnrolledStudentsTable } from "@/components/admin/enrollments/enrolled-students-table";
 import { PendingStudentsTable } from "@/components/admin/enrollments/pending-students-table";
+import { UnenrolledStudentsTable } from "@/components/admin/enrollments/unenrolled-students-table";
+import { ManualEnrollDialog } from "@/components/admin/enrollments/manual-enroll-dialog";
 
 function EnrollmentContent() {
   const searchParams = useSearchParams();
@@ -34,8 +40,9 @@ function EnrollmentContent() {
   // 1. Fetch danh sách khóa học
   const { data: courses = [], isLoading: isLoadingCourses } = useCourses("");
 
-  // 2. Quản lý khóa học đang chọn
+  // 2. Quản lý khóa học đang chọn & Dialog ghi danh thủ công
   const [selectedCourseId, setSelectedCourseId] = React.useState<string>(courseIdParam);
+  const [isManualEnrollOpen, setIsManualEnrollOpen] = React.useState<boolean>(false);
 
   // Cập nhật selectedCourseId khi URL param hoặc danh sách khóa học thay đổi
   React.useEffect(() => {
@@ -69,10 +76,27 @@ function EnrollmentContent() {
     refetch: refetchPending,
   } = usePendingStudentsByCourse(selectedCourseId, Boolean(selectedCourseId));
 
-  // 5. Hooks Duyệt (GhiDanhKhoaHoc) & Từ chối/Hủy (HuyGhiDanh)
+  // 5. Fetch danh sách người dùng CHƯA GHI DANH qua API LayDanhSachNguoiDungChuaGhiDanh
+  const {
+    data: unenrolledUsers = [],
+    isLoading: isLoadingUnenrolled,
+    isFetching: isFetchingUnenrolled,
+    refetch: refetchUnenrolled,
+  } = useUnenrolledUsersByCourse(selectedCourseId, Boolean(selectedCourseId));
+
+  // 6. Hooks Ghi danh (GhiDanhKhoaHoc), Duyệt & Hủy (HuyGhiDanh)
+  const enrollUserMutation = useEnrollUser();
   const approveMutation = useApproveEnrollment();
   const rejectMutation = useRejectEnrollment();
   const unenrollMutation = useUnenroll();
+
+  const handleEnrollUser = async (taiKhoan: string) => {
+    if (!selectedCourseId) return;
+    await enrollUserMutation.mutateAsync({
+      maKhoaHoc: selectedCourseId,
+      taiKhoan,
+    });
+  };
 
   const handleApprove = async (taiKhoan: string) => {
     if (!selectedCourseId) return;
@@ -101,13 +125,14 @@ function EnrollmentContent() {
   const handleRefreshAll = () => {
     refetchStudents();
     refetchPending();
+    refetchUnenrolled();
   };
 
-  const isRefreshing = isFetchingStudents || isFetchingPending;
+  const isRefreshing = isFetchingStudents || isFetchingPending || isFetchingUnenrolled;
 
   return (
     <div className="space-y-6">
-      {/* Tiêu đề trang */}
+      {/* Tiêu đề trang & Các nút thao tác */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
@@ -115,21 +140,34 @@ function EnrollmentContent() {
             <span>Quản lý ghi danh & Xét duyệt học viên</span>
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Theo dõi danh sách học viên và xét duyệt (Duyệt / Từ chối) các yêu cầu tham gia khóa học qua API CyberSoft.
+            Ghi danh học viên, xét duyệt yêu cầu và quản lý danh sách học viên theo từng khóa học qua API CyberSoft.
           </p>
         </div>
 
         {selectedCourseId && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRefreshAll}
-            disabled={isRefreshing}
-            className="gap-2 shrink-0 self-start sm:self-auto"
-          >
-            <RefreshCw className={`size-3.5 ${isRefreshing ? "animate-spin" : ""}`} />
-            <span>Làm mới dữ liệu</span>
-          </Button>
+          <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
+            {/* Nút mở Modal Ghi danh thủ công */}
+            <Button
+              size="sm"
+              onClick={() => setIsManualEnrollOpen(true)}
+              className="gap-2 bg-primary text-primary-foreground"
+            >
+              <UserPlus className="size-4" />
+              <span>Ghi danh học viên</span>
+            </Button>
+
+            {/* Nút Làm mới dữ liệu */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRefreshAll}
+              disabled={isRefreshing}
+              className="gap-2"
+            >
+              <RefreshCw className={`size-3.5 ${isRefreshing ? "animate-spin" : ""}`} />
+              <span>Làm mới</span>
+            </Button>
+          </div>
         )}
       </div>
 
@@ -165,21 +203,6 @@ function EnrollmentContent() {
 
           <Card className="border bg-card shadow-xs">
             <CardContent className="p-4 flex items-center gap-3">
-              <div className="size-10 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
-                <Layers className="size-5" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs text-muted-foreground font-medium">Danh mục</p>
-                <p className="text-sm font-semibold truncate">
-                  {currentCourse.danhMucKhoaHoc?.tenDanhMucKhoaHoc || "Chưa phân loại"}
-                </p>
-                <p className="text-[11px] text-muted-foreground">Phân loại khóa học</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border bg-card shadow-xs">
-            <CardContent className="p-4 flex items-center gap-3">
               <div className="size-10 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
                 <GraduationCap className="size-5" />
               </div>
@@ -203,24 +226,40 @@ function EnrollmentContent() {
                 <p className={`text-xl font-bold ${pendingStudents.length > 0 ? "text-amber-600 dark:text-amber-400" : "text-foreground"}`}>
                   {isLoadingPending ? "..." : pendingStudents.length}
                 </p>
-                <p className="text-[11px] text-muted-foreground">Cần quản trị viên duyệt</p>
+                <p className="text-[11px] text-muted-foreground">Cần duyệt</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border bg-card shadow-xs">
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="size-10 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                <Users className="size-5" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs text-muted-foreground font-medium">Chưa ghi danh</p>
+                <p className="text-xl font-bold text-foreground">
+                  {isLoadingUnenrolled ? "..." : unenrolledUsers.length}
+                </p>
+                <p className="text-[11px] text-muted-foreground">Có thể ghi danh</p>
               </div>
             </CardContent>
           </Card>
         </div>
       )}
 
-      {/* Tabs Quản lý Học viên & Xét duyệt */}
+      {/* Tabs Quản lý Học viên: Đã ghi danh / Chờ duyệt / Chưa ghi danh */}
       {selectedCourseId ? (
         <Tabs defaultValue="enrolled" className="space-y-4">
           <TabsList className="h-10 p-1 bg-muted">
             <TabsTrigger value="enrolled" className="gap-2 px-3">
               <UserCheck className="size-4" />
-              <span>Học viên đã ghi danh</span>
+              <span>Đã ghi danh</span>
               <span className="ml-1 rounded-full bg-background px-2 py-0.5 text-xs font-semibold shadow-xs">
                 {students.length}
               </span>
             </TabsTrigger>
+
             <TabsTrigger value="pending" className="gap-2 px-3">
               <Clock className="size-4" />
               <span>Chờ xét duyệt</span>
@@ -234,8 +273,17 @@ function EnrollmentContent() {
                 {pendingStudents.length}
               </span>
             </TabsTrigger>
+
+            <TabsTrigger value="unenrolled" className="gap-2 px-3">
+              <Users className="size-4" />
+              <span>Chưa ghi danh</span>
+              <span className="ml-1 rounded-full bg-background px-2 py-0.5 text-xs font-semibold shadow-xs">
+                {unenrolledUsers.length}
+              </span>
+            </TabsTrigger>
           </TabsList>
 
+          {/* Tab 1: Đã ghi danh */}
           <TabsContent value="enrolled">
             <EnrolledStudentsTable
               students={students}
@@ -248,6 +296,7 @@ function EnrollmentContent() {
             />
           </TabsContent>
 
+          {/* Tab 2: Chờ xét duyệt */}
           <TabsContent value="pending">
             <PendingStudentsTable
               pendingStudents={pendingStudents}
@@ -261,11 +310,38 @@ function EnrollmentContent() {
               isRejecting={rejectMutation.isPending}
             />
           </TabsContent>
+
+          {/* Tab 3: Chưa ghi danh */}
+          <TabsContent value="unenrolled">
+            <UnenrolledStudentsTable
+              unenrolledUsers={unenrolledUsers}
+              isLoading={isLoadingUnenrolled}
+              isFetching={isFetchingUnenrolled}
+              courseName={currentCourse?.tenKhoaHoc || selectedCourseId}
+              courseId={selectedCourseId}
+              onEnroll={handleEnrollUser}
+              isEnrolling={enrollUserMutation.isPending}
+            />
+          </TabsContent>
         </Tabs>
       ) : (
         <div className="rounded-lg border bg-card p-12 text-center text-muted-foreground">
-          Vui lòng chọn một khóa học ở trên để xem danh sách và xét duyệt học viên.
+          Vui lòng chọn một khóa học ở trên để xem danh sách và ghi danh học viên.
         </div>
+      )}
+
+      {/* Modal Hộp thoại Ghi danh thủ công */}
+      {selectedCourseId && (
+        <ManualEnrollDialog
+          open={isManualEnrollOpen}
+          onOpenChange={setIsManualEnrollOpen}
+          courseId={selectedCourseId}
+          courseName={currentCourse?.tenKhoaHoc || selectedCourseId}
+          unenrolledUsers={unenrolledUsers}
+          isLoading={isLoadingUnenrolled}
+          onEnroll={handleEnrollUser}
+          isEnrolling={enrollUserMutation.isPending}
+        />
       )}
     </div>
   );
