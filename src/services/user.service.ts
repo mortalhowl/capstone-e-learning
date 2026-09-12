@@ -8,6 +8,7 @@ import type {
   LoginResponse,
   RegisterResponse,
   PaginatedUser,
+  CreateUserPayload,
 } from "@/schemas/user.schema";
 
 export const userService = {
@@ -38,4 +39,7 @@ export const userService = {
         },
       },
     ),
+
+  createUser: (payload: CreateUserPayload) =>
+    axiosInstance.post("/api/QuanLyNguoiDung/ThemNguoiDung", payload),
 };

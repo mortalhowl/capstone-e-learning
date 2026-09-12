@@ -8,14 +8,16 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { UserFilters } from "@/components/admin/users/user-filters";
 import { UserTable } from "@/components/admin/users/user-table";
 import { UserPagination } from "@/components/admin/users/user-pagination";
+import { CreateUserDialog } from "@/components/admin/users/create-user-dialog";
 import { Button } from "@/components/ui/button";
 import type { UserItem } from "@/schemas/user.schema";
 
 export default function AdminUsersPage() {
-  // 1. Quản lý State: tìm kiếm, bộ lọc vai trò và phân trang
+  // 1. Quản lý State: tìm kiếm, bộ lọc vai trò, phân trang và dialog tạo mới
   const [searchTerm, setSearchTerm] = React.useState<string>("");
   const [roleFilter, setRoleFilter] = React.useState<string>("ALL");
   const [page, setPage] = React.useState<number>(1);
+  const [isCreateOpen, setIsCreateOpen] = React.useState<boolean>(false);
   const pageSize = 10;
 
   // 2. Debounce từ khóa tìm kiếm (400ms)
@@ -72,9 +74,7 @@ export default function AdminUsersPage() {
         isLoading={isFetching}
         onRefresh={() => refetch()}
         totalCount={totalCount}
-        onOpenCreateModal={() => {
-          // Chuẩn bị cho feature tạo người dùng tiếp theo
-        }}
+        onOpenCreateModal={() => setIsCreateOpen(true)}
       />
 
       {/* Thông báo lỗi nếu API gặp sự cố */}
@@ -115,6 +115,12 @@ export default function AdminUsersPage() {
         pageSize={pageSize}
         onPageChange={(newPage) => setPage(newPage)}
         disabled={isFetching}
+      />
+
+      {/* Modal Dialog Thêm người dùng mới */}
+      <CreateUserDialog
+        open={isCreateOpen}
+        onOpenChange={setIsCreateOpen}
       />
     </div>
   );

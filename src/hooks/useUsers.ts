@@ -9,7 +9,12 @@ import { toast } from "sonner";
 
 import { userService } from "@/services/user.service";
 import { useAuthStore } from "@/stores/auth.store";
-import type { LoginPayload, RegisterPayload, User } from "@/schemas/user.schema";
+import type {
+  LoginPayload,
+  RegisterPayload,
+  User,
+  CreateUserPayload,
+} from "@/schemas/user.schema";
 
 export const userKeys = {
   all: ["users"] as const,
@@ -64,3 +69,18 @@ export const usePaginatedUsers = (tuKhoa = "", page = 1, pageSize = 10) =>
         .then((res) => res.data),
     placeholderData: keepPreviousData,
   });
+
+export const useCreateUser = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: CreateUserPayload) => userService.createUser(payload),
+    onSuccess: () => {
+      toast.success("Thêm người dùng mới thành công!");
+      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+    },
+    onError: (error: AxiosError<string>) => {
+      toast.error(error.response?.data || "Thêm người dùng thất bại!");
+    },
+  });
+};
