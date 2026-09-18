@@ -49,6 +49,7 @@ interface CourseTableProps {
   onEditCourse?: (course: Course) => void;
   onDeleteCourse?: (course: Course) => void;
   onUploadImage?: (course: Course) => void;
+  onEnrollUsers?: (course: Course) => void;
 }
 
 export function CourseTable({
@@ -60,6 +61,7 @@ export function CourseTable({
   onEditCourse,
   onDeleteCourse,
   onUploadImage,
+  onEnrollUsers,
 }: CourseTableProps) {
   // State quản lý danh sách ảnh bị lỗi để fallback sang placeholder
   const [imageErrors, setImageErrors] = React.useState<Record<string, boolean>>({});
@@ -238,6 +240,13 @@ export function CourseTable({
                         >
                           <Users className="size-4" />
                           <span>Quản lý học viên</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="gap-2 cursor-pointer"
+                          onClick={() => onEnrollUsers?.(course)}
+                        >
+                          <UserPlus className="size-4" />
+                          <span>Ghi danh người dùng</span>
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           className="gap-2 cursor-pointer"

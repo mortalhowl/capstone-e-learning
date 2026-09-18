@@ -39,8 +39,9 @@ export type Course = z.infer<typeof CourseSchema>;
 
 export const StudentSchema = z.object({
   taiKhoan: z.string(),
-  biDanh: z.string().nullable(),
-  hoTen: z.string(),
+  biDanh: z.string().nullish().transform((val) => val ?? ""),
+  hoTen: z.string().nullish().transform((val) => val ?? ""),
+  matKhau: z.string().nullish().transform((val) => val ?? ""),
 });
 export type Student = z.infer<typeof StudentSchema>;
 

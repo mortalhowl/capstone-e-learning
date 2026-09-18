@@ -12,6 +12,7 @@ import { CreateCourseDialog } from "@/components/admin/courses/create-course-dia
 import { EditCourseDialog } from "@/components/admin/courses/edit-course-dialog";
 import { DeleteCourseDialog } from "@/components/admin/courses/delete-course-dialog";
 import { UploadCourseImageDialog } from "@/components/admin/courses/upload-course-image-dialog";
+import { CourseEnrollmentDialog } from "@/components/admin/courses/course-enrollment-dialog";
 import { Button } from "@/components/ui/button";
 import type { Course } from "@/schemas/course.schema";
 
@@ -23,6 +24,7 @@ export default function AdminCoursesPage() {
   const [editingCourse, setEditingCourse] = React.useState<Course | null>(null);
   const [deletingCourse, setDeletingCourse] = React.useState<Course | null>(null);
   const [uploadingCourse, setUploadingCourse] = React.useState<Course | null>(null);
+  const [enrollingCourse, setEnrollingCourse] = React.useState<Course | null>(null);
   const pageSize = 10;
 
   // 2. Debounce từ khóa tìm kiếm (chờ 400ms sau khi người dùng dừng gõ)
@@ -107,6 +109,7 @@ export default function AdminCoursesPage() {
         onEditCourse={setEditingCourse}
         onDeleteCourse={setDeletingCourse}
         onUploadImage={setUploadingCourse}
+        onEnrollUsers={setEnrollingCourse}
       />
 
       {/* Thanh điều khiển phân trang */}
@@ -144,6 +147,13 @@ export default function AdminCoursesPage() {
         course={uploadingCourse}
         open={Boolean(uploadingCourse)}
         onOpenChange={(open) => !open && setUploadingCourse(null)}
+      />
+
+      {/* Modal Dialog Ghi danh người dùng vào khóa học */}
+      <CourseEnrollmentDialog
+        course={enrollingCourse}
+        open={Boolean(enrollingCourse)}
+        onOpenChange={(open) => !open && setEnrollingCourse(null)}
       />
     </div>
   );
