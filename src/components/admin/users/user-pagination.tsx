@@ -74,7 +74,7 @@ export function UserPagination({
         <Button
           variant="outline"
           size="sm"
-          onClick={() => onPageChange(currentPage - 1)}
+          onClick={() => onPageChange(Math.max(1, currentPage - 1))}
           disabled={currentPage <= 1 || disabled}
           className="h-8 px-2.5 text-xs gap-1"
         >
@@ -125,7 +125,7 @@ export function UserPagination({
         <Button
           variant="outline"
           size="sm"
-          onClick={() => onPageChange(currentPage + 1)}
+          onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
           disabled={currentPage >= totalPages || disabled}
           className="h-8 px-2.5 text-xs gap-1"
         >

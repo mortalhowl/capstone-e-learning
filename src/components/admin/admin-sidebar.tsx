@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   LayoutDashboard,
   BookOpen,
@@ -88,105 +88,105 @@ const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    label: "Content",
+    label: "Nội dung đào tạo",
     items: [
       {
-        title: "Course Management",
+        title: "Quản lý khóa học",
         url: "/admin/courses",
         icon: BookOpen,
         items: [
-          { title: "All Courses", url: "/admin/courses", icon: BookOpen },
-          { title: "Categories", url: "/admin/courses/categories", icon: FolderTree },
-          { title: "Chapters", url: "/admin/courses/chapters", icon: Layers },
-          { title: "Lessons", url: "/admin/courses/lessons", icon: FileText },
-          { title: "Reviews", url: "/admin/courses/reviews", icon: Star },
+          { title: "Tất cả khóa học", url: "/admin/courses", icon: BookOpen },
+          { title: "Danh mục khóa học", url: "/admin/courses/categories", icon: FolderTree },
+          { title: "Chương mục", url: "/admin/courses/chapters", icon: Layers },
+          { title: "Bài học", url: "/admin/courses/lessons", icon: FileText },
+          { title: "Đánh giá khóa học", url: "/admin/courses/reviews", icon: Star },
         ],
       },
       {
-        title: "User Management",
+        title: "Quản lý người dùng",
         url: "/admin/users",
         icon: Users,
         items: [
-          { title: "All Users", url: "/admin/users", icon: Users },
-          { title: "Students", url: "/admin/users/students", icon: GraduationCap },
-          { title: "Instructors", url: "/admin/users/instructors", icon: UserCog },
+          { title: "Tất cả người dùng", url: "/admin/users", icon: Users },
+          { title: "Học viên", url: "/admin/users?role=HV", icon: GraduationCap },
+          { title: "Giảng viên / Giáo vụ", url: "/admin/users?role=GV", icon: UserCog },
         ],
       },
     ],
   },
   {
-    label: "Operations",
+    label: "Vận hành & Ghi danh",
     items: [
       {
-        title: "Enrollment Management",
+        title: "Quản lý ghi danh",
         url: "/admin/enrollments",
         icon: ClipboardList,
         items: [
-          { title: "All Enrollments", url: "/admin/enrollments", icon: ClipboardList },
-          { title: "Learning Progress", url: "/admin/enrollments/progress", icon: TrendingUp },
+          { title: "Xét duyệt & Ghi danh", url: "/admin/enrollments", icon: ClipboardList },
+          { title: "Tiến độ học tập", url: "/admin/enrollments/progress", icon: TrendingUp },
         ],
       },
       {
-        title: "Payment Management",
+        title: "Quản lý thanh toán",
         url: "/admin/payments",
         icon: CreditCard,
         items: [
-          { title: "Transactions", url: "/admin/payments/transactions", icon: Receipt },
-          { title: "Orders", url: "/admin/payments/orders", icon: ShoppingCart },
-          { title: "Refunds", url: "/admin/payments/refunds", icon: RotateCcw },
+          { title: "Giao dịch", url: "/admin/payments/transactions", icon: Receipt },
+          { title: "Đơn hàng", url: "/admin/payments/orders", icon: ShoppingCart },
+          { title: "Hoàn tiền", url: "/admin/payments/refunds", icon: RotateCcw },
         ],
       },
     ],
   },
   {
-    label: "Engagement",
+    label: "Tương tác & Hỗ trợ",
     items: [
       {
-        title: "Communication",
+        title: "Truyền thông",
         url: "/admin/communication",
         icon: Megaphone,
         items: [
-          { title: "Announcements", url: "/admin/communication/announcements", icon: Megaphone },
-          { title: "Notifications", url: "/admin/communication/notifications", icon: Bell },
-          { title: "Comments", url: "/admin/communication/comments", icon: MessageSquare },
+          { title: "Thông báo chung", url: "/admin/communication/announcements", icon: Megaphone },
+          { title: "Thông báo hệ thống", url: "/admin/communication/notifications", icon: Bell },
+          { title: "Bình luận", url: "/admin/communication/comments", icon: MessageSquare },
         ],
       },
       {
-        title: "Support",
+        title: "Hỗ trợ kỹ thuật",
         url: "/admin/support",
         icon: LifeBuoy,
         items: [
-          { title: "Support Tickets", url: "/admin/support/tickets", icon: LifeBuoy },
+          { title: "Phiếu hỗ trợ", url: "/admin/support/tickets", icon: LifeBuoy },
         ],
       },
     ],
   },
   {
-    label: "Analytics",
+    label: "Báo cáo & Thống kê",
     items: [
       {
-        title: "Reports",
+        title: "Báo cáo thống kê",
         url: "/admin/reports",
         icon: BarChart3,
         items: [
-          { title: "Overview", url: "/admin/reports", icon: PieChart },
-          { title: "Revenue", url: "/admin/reports/revenue", icon: DollarSign },
-          { title: "User Analytics", url: "/admin/reports/users", icon: UserCheck },
-          { title: "Course Analytics", url: "/admin/reports/courses", icon: BarChart3 },
+          { title: "Tổng quan báo cáo", url: "/admin/reports", icon: PieChart },
+          { title: "Báo cáo doanh thu", url: "/admin/reports/revenue", icon: DollarSign },
+          { title: "Thống kê người dùng", url: "/admin/reports/users", icon: UserCheck },
+          { title: "Thống kê khóa học", url: "/admin/reports/courses", icon: BarChart3 },
         ],
       },
     ],
   },
   {
-    label: "System",
+    label: "Hệ thống",
     items: [
       {
-        title: "Roles & Permissions",
+        title: "Phân quyền & Vai trò",
         url: "/admin/roles",
         icon: Shield,
       },
       {
-        title: "Settings",
+        title: "Cài đặt hệ thống",
         url: "/admin/settings",
         icon: Settings,
       },
@@ -198,6 +198,7 @@ const NAV_GROUPS: NavGroup[] = [
 
 export function AdminSidebar() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const user = useAuthStore((state) => state.user);
   const { isMobile, setOpenMobile } = useSidebar();
 
@@ -208,9 +209,21 @@ export function AdminSidebar() {
   }, [isMobile, setOpenMobile]);
 
   // Kiểm tra xem một URL có đang active không
-  // So sánh chính xác cho trang chính, startsWith cho sub-pages
+  // Hỗ trợ cả query params (ví dụ ?role=HV, ?role=GV)
   const isActive = (url: string) => {
     if (url === "/admin") return pathname === "/admin";
+    if (url.includes("?")) {
+      const [path, query] = url.split("?");
+      const params = new URLSearchParams(query);
+      const role = params.get("role");
+      return pathname === path && searchParams.get("role") === role;
+    }
+    if (url === "/admin/users") {
+      return (
+        pathname === "/admin/users" &&
+        (!searchParams.get("role") || searchParams.get("role") === "ALL")
+      );
+    }
     return pathname === url || pathname.startsWith(url + "/");
   };
 
@@ -236,7 +249,7 @@ export function AdminSidebar() {
               </div>
               <div className="flex flex-col gap-0.5 leading-none">
                 <span className="font-semibold">E-Learning</span>
-                <span className="text-xs text-muted-foreground">Admin Panel</span>
+                <span className="text-xs text-muted-foreground">Quản trị hệ thống</span>
               </div>
             </SidebarMenuButton>
           </SidebarMenuItem>

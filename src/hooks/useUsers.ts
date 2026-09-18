@@ -21,6 +21,7 @@ export const userKeys = {
   all: ["users"] as const,
   lists: () => [...userKeys.all, "list"] as const,
   list: (filters: object) => [...userKeys.lists(), filters] as const,
+  allList: (tuKhoa: string) => [...userKeys.all, "allList", tuKhoa] as const,
   profile: () => [...userKeys.all, "profile"] as const,
 };
 
@@ -71,6 +72,14 @@ export const usePaginatedUsers = (tuKhoa = "", page = 1, pageSize = 10) =>
     placeholderData: keepPreviousData,
   });
 
+export const useAllUsers = (tuKhoa = "", enabled = true) =>
+  useQuery({
+    queryKey: userKeys.allList(tuKhoa),
+    queryFn: () => userService.getAllUsers(tuKhoa).then((res) => res.data),
+    enabled,
+    placeholderData: keepPreviousData,
+  });
+
 export const useCreateUser = () => {
   const queryClient = useQueryClient();
 
@@ -115,5 +124,4 @@ export const useDeleteUser = () => {
     },
   });
 };
-
 

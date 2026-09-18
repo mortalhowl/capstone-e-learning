@@ -10,6 +10,7 @@ import type {
   PaginatedUser,
   CreateUserPayload,
   EditUserPayload,
+  UserItem,
 } from "@/schemas/user.schema";
 
 export const userService = {
@@ -40,6 +41,14 @@ export const userService = {
         },
       },
     ),
+
+  getAllUsers: (tuKhoa = "") =>
+    axiosInstance.get<UserItem[]>("/api/QuanLyNguoiDung/LayDanhSachNguoiDung", {
+      params: {
+        MaNhom: MA_NHOM,
+        tuKhoa: tuKhoa || undefined,
+      },
+    }),
 
   createUser: (payload: CreateUserPayload) =>
     axiosInstance.post("/api/QuanLyNguoiDung/ThemNguoiDung", payload),
