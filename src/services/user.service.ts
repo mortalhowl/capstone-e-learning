@@ -8,6 +8,7 @@ import type {
   LoginResponse,
   RegisterResponse,
   PaginatedUser,
+  UserItem,
 } from "@/schemas/user.schema";
 
 export const userService = {
@@ -38,4 +39,12 @@ export const userService = {
         },
       },
     ),
+
+  getAllUsers: (tuKhoa = "") =>
+    axiosInstance.get<UserItem[]>("/api/QuanLyNguoiDung/LayDanhSachNguoiDung", {
+      params: {
+        MaNhom: MA_NHOM,
+        tuKhoa: tuKhoa || undefined,
+      },
+    }),
 };
