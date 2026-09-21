@@ -217,8 +217,12 @@ export const useUnenroll = () => {
   return useMutation({
     mutationFn: (payload: CourseRegisterPayload) =>
       courseService.unenroll(payload),
-    onSuccess: (_, payload) => {
-      toast.success("Hủy ghi danh thành công!");
+    onSuccess: (res, payload) => {
+      const message =
+        typeof res?.data === "string" && res.data
+          ? res.data
+          : "Hủy đăng ký khóa học thành công";
+      toast.success(message);
       queryClient.invalidateQueries({ queryKey: userKeys.profile() });
       queryClient.invalidateQueries({
         queryKey: courseKeys.detail(payload.maKhoaHoc),

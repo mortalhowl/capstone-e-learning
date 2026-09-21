@@ -11,7 +11,25 @@ axiosInstance.interceptors.request.use((config) => {
     config.headers.TokenCybersoft = CYBERSOFT_TOKEN;
   }
   if (typeof window !== "undefined") {
-    const token = localStorage.getItem("ACCESS_TOKEN");
+    let token = localStorage.getItem("ACCESS_TOKEN");
+    if (!token) {
+      try {
+        const rawAuth = localStorage.getItem("auth-storage");
+        if (rawAuth) {
+          const parsed = JSON.parse(rawAuth);
+          token = parsed?.state?.user?.accessToken;
+        }
+        if (!token) {
+          const rawUserLogin = localStorage.getItem("USER_LOGIN");
+          if (rawUserLogin) {
+            const parsed = JSON.parse(rawUserLogin);
+            token = parsed?.accessToken;
+          }
+        }
+      } catch {
+        // ignore parse error
+      }
+    }
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
