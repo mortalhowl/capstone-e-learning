@@ -12,30 +12,26 @@ import { UserPagination } from "@/components/admin/users/user-pagination";
 import { CreateUserDialog } from "@/components/admin/users/create-user-dialog";
 import { EditUserDialog } from "@/components/admin/users/edit-user-dialog";
 import { DeleteUserDialog } from "@/components/admin/users/delete-user-dialog";
+import { UserEnrollmentDialog } from "@/components/admin/users/user-enrollment-dialog";
 import { Button } from "@/components/ui/button";
 import type { UserItem } from "@/schemas/user.schema";
 
 function AdminUsersContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const roleParam = searchParams.get("role") || "ALL";
+  const roleFilter = searchParams.get("role") || "ALL";
 
-  // 1. Quản lý State: tìm kiếm, bộ lọc vai trò, phân trang và dialog tạo mới / chỉnh sửa / xóa
+  // 1. Quản lý State: tìm kiếm, phân trang và dialog tạo mới / chỉnh sửa / xóa / ghi danh
   const [searchTerm, setSearchTerm] = React.useState<string>("");
-  const [roleFilter, setRoleFilter] = React.useState<string>(roleParam);
   const [page, setPage] = React.useState<number>(1);
   const [isCreateOpen, setIsCreateOpen] = React.useState<boolean>(false);
   const [editingUser, setEditingUser] = React.useState<UserItem | null>(null);
   const [deletingUser, setDeletingUser] = React.useState<UserItem | null>(null);
+  const [enrollingUser, setEnrollingUser] = React.useState<UserItem | null>(null);
   const pageSize = 10;
 
-  // Đồng bộ roleFilter khi URL searchParam thay đổi (ví dụ khi user click từ sidebar)
-  React.useEffect(() => {
-    setRoleFilter(roleParam);
-  }, [roleParam]);
-
   const handleRoleChange = (newRole: string) => {
-    setRoleFilter(newRole);
+    setPage(1);
     if (newRole === "ALL") {
       router.push("/admin/users");
     } else {
@@ -43,15 +39,15 @@ function AdminUsersContent() {
     }
   };
 
+  const handleSearchChange = (val: string) => {
+    setSearchTerm(val);
+    setPage(1);
+  };
+
   // 2. Debounce từ khóa tìm kiếm (400ms)
   const debouncedSearch = useDebounce(searchTerm.trim(), 400);
 
-  // 3. Reset về trang 1 khi từ khóa hoặc bộ lọc vai trò thay đổi
-  React.useEffect(() => {
-    setPage(1);
-  }, [debouncedSearch, roleFilter]);
-
-  // 4. Phân trang thông minh:
+  // 3. Phân trang thông minh:
   // - Nếu chọn "ALL" (Tất cả vai trò): Sử dụng API phân trang từ server LayDanhSachNguoiDung_PhanTrang
   // - Nếu chọn lọc theo vai trò (GV hoặc HV): Sử dụng LayDanhSachNguoiDung để lấy đủ danh sách,
   //   lọc chính xác theo vai trò và phân trang client-side để mỗi trang luôn có đủ 10 người,
@@ -124,13 +120,6 @@ function AdminUsersContent() {
       allUsersQuery.error,
     ]);
 
-  // Tự động điều chỉnh trang nếu vượt quá totalPages
-  React.useEffect(() => {
-    if (totalPages > 0 && page > totalPages) {
-      setPage(totalPages);
-    }
-  }, [totalPages, page]);
-
   const handleRefresh = () => {
     if (isAllRoles) {
       paginatedQuery.refetch();
@@ -141,8 +130,8 @@ function AdminUsersContent() {
 
   const handleResetSearch = () => {
     setSearchTerm("");
-    setRoleFilter("ALL");
     setPage(1);
+    router.push("/admin/users");
   };
 
   return (
@@ -160,7 +149,7 @@ function AdminUsersContent() {
       {/* Thanh tìm kiếm & bộ lọc */}
       <UserFilters
         searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
+        onSearchChange={handleSearchChange}
         onResetSearch={handleResetSearch}
         roleFilter={roleFilter}
         onRoleFilterChange={handleRoleChange}
@@ -200,6 +189,7 @@ function AdminUsersContent() {
         isFiltered={Boolean(debouncedSearch || roleFilter !== "ALL")}
         onEditUser={setEditingUser}
         onDeleteUser={setDeletingUser}
+        onEnrollCourses={setEnrollingUser}
       />
 
       {/* Thanh điều hướng phân trang */}
@@ -230,6 +220,13 @@ function AdminUsersContent() {
         user={deletingUser}
         open={Boolean(deletingUser)}
         onOpenChange={(open) => !open && setDeletingUser(null)}
+      />
+
+      {/* Modal Dialog Ghi danh khóa học cho người dùng (13.2.1) */}
+      <UserEnrollmentDialog
+        user={enrollingUser}
+        open={Boolean(enrollingUser)}
+        onOpenChange={(open) => !open && setEnrollingUser(null)}
       />
     </div>
   );

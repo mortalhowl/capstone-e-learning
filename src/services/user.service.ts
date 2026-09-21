@@ -12,6 +12,7 @@ import type {
   EditUserPayload,
   UserItem,
 } from "@/schemas/user.schema";
+import type { UnenrolledCourse } from "@/schemas/course.schema";
 
 export const userService = {
   login: (payload: LoginPayload) =>
@@ -60,6 +61,20 @@ export const userService = {
     axiosInstance.delete("/api/QuanLyNguoiDung/XoaNguoiDung", {
       params: { TaiKhoan: taiKhoan },
     }),
+
+  getUnenrolledCoursesByUser: (taiKhoan: string) =>
+    axiosInstance.post<UnenrolledCourse[]>(
+      "/api/QuanLyNguoiDung/LayDanhSachKhoaHocChuaGhiDanh",
+      {
+        TaiKhoan: taiKhoan,
+        taiKhoan,
+      },
+      {
+        params: {
+          TaiKhoan: taiKhoan,
+        },
+      },
+    ),
 };
 
 

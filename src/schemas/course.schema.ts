@@ -70,3 +70,13 @@ export const CreateCourseSchema = z.object({
   taiKhoanNguoiTao: z.string().min(1, "Tài khoản người tạo không được để trống"),
 });
 export type CreateCoursePayload = z.infer<typeof CreateCourseSchema>;
+
+export const UnenrolledCourseSchema = z.object({
+  maKhoaHoc: z.string(),
+  tenKhoaHoc: z.string(),
+  biDanh: z.string().nullish().transform((val) => val ?? ""),
+  hinhAnh: z.string().nullish().transform((val) => val ?? ""),
+  moTa: z.string().nullish().transform((val) => val ?? ""),
+  luotXem: z.number().nullish().transform((val) => val ?? 0),
+});
+export type UnenrolledCourse = z.infer<typeof UnenrolledCourseSchema>;

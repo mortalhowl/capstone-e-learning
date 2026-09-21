@@ -116,6 +116,9 @@ export const useEnrollUser = () => {
         queryKey: ["unenrolled-users", payload.maKhoaHoc],
       });
       queryClient.invalidateQueries({
+        queryKey: ["user-unenrolled-courses", payload.taiKhoan],
+      });
+      queryClient.invalidateQueries({
         queryKey: courseKeys.detail(payload.maKhoaHoc),
       });
       queryClient.invalidateQueries({ queryKey: courseKeys.lists() });

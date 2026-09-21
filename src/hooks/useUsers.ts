@@ -125,3 +125,16 @@ export const useDeleteUser = () => {
   });
 };
 
+export const useUnenrolledCoursesByUser = (
+  taiKhoan: string,
+  enabled = true,
+) =>
+  useQuery({
+    queryKey: ["user-unenrolled-courses", taiKhoan],
+    queryFn: () =>
+      userService
+        .getUnenrolledCoursesByUser(taiKhoan)
+        .then((res) => res.data),
+    enabled: enabled && Boolean(taiKhoan),
+  });
+

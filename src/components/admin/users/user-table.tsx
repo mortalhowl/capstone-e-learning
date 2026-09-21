@@ -11,7 +11,6 @@ import {
   Trash2,
   ExternalLink,
   BookOpen,
-  UserCheck,
   Users as UsersIcon,
 } from "lucide-react";
 
@@ -25,7 +24,6 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { UserTableSkeleton } from "@/components/admin/table-skeleton";
 import {
@@ -45,6 +43,7 @@ interface UserTableProps {
   isFiltered?: boolean;
   onEditUser?: (user: UserItem) => void;
   onDeleteUser?: (user: UserItem) => void;
+  onEnrollCourses?: (user: UserItem) => void;
 }
 
 export function UserTable({
@@ -55,6 +54,7 @@ export function UserTable({
   isFiltered,
   onEditUser,
   onDeleteUser,
+  onEnrollCourses,
 }: UserTableProps) {
   // Hàm lấy 2 chữ cái đầu của họ tên để hiển thị Avatar Fallback
   const getInitials = (name: string) => {
@@ -196,7 +196,10 @@ export function UserTable({
                           <ExternalLink className="size-4" />
                           <span>Xem chi tiết</span>
                         </DropdownMenuItem>
-                        <DropdownMenuItem className="gap-2 cursor-pointer">
+                        <DropdownMenuItem
+                          className="gap-2 cursor-pointer"
+                          onClick={() => onEnrollCourses?.(user)}
+                        >
                           <BookOpen className="size-4" />
                           <span>Ghi danh khóa học</span>
                         </DropdownMenuItem>
