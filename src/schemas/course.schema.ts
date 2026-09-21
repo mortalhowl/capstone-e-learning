@@ -80,3 +80,10 @@ export const UnenrolledCourseSchema = z.object({
   luotXem: z.number().nullish().transform((val) => val ?? 0),
 });
 export type UnenrolledCourse = z.infer<typeof UnenrolledCourseSchema>;
+
+export interface UserEnrolledCourse {
+  maKhoaHoc: string;
+  tenKhoaHoc: string;
+  biDanh?: string;
+  [key: string]: unknown;
+}

@@ -119,6 +119,9 @@ export const useEnrollUser = () => {
         queryKey: ["user-unenrolled-courses", payload.taiKhoan],
       });
       queryClient.invalidateQueries({
+        queryKey: ["user-enrolled-courses", payload.taiKhoan],
+      });
+      queryClient.invalidateQueries({
         queryKey: courseKeys.detail(payload.maKhoaHoc),
       });
       queryClient.invalidateQueries({ queryKey: courseKeys.lists() });
@@ -241,6 +244,12 @@ export const useUnenroll = () => {
       });
       queryClient.invalidateQueries({
         queryKey: ["unenrolled-users", payload.maKhoaHoc],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["user-enrolled-courses", payload.taiKhoan],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["user-unenrolled-courses", payload.taiKhoan],
       });
     },
 

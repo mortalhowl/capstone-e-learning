@@ -12,7 +12,10 @@ import type {
   EditUserPayload,
   UserItem,
 } from "@/schemas/user.schema";
-import type { UnenrolledCourse } from "@/schemas/course.schema";
+import type {
+  UnenrolledCourse,
+  UserEnrolledCourse,
+} from "@/schemas/course.schema";
 
 export const userService = {
   login: (payload: LoginPayload) =>
@@ -65,6 +68,20 @@ export const userService = {
   getUnenrolledCoursesByUser: (taiKhoan: string) =>
     axiosInstance.post<UnenrolledCourse[]>(
       "/api/QuanLyNguoiDung/LayDanhSachKhoaHocChuaGhiDanh",
+      {
+        TaiKhoan: taiKhoan,
+        taiKhoan,
+      },
+      {
+        params: {
+          TaiKhoan: taiKhoan,
+        },
+      },
+    ),
+
+  getEnrolledCoursesByUser: (taiKhoan: string) =>
+    axiosInstance.post<UserEnrolledCourse[]>(
+      "/api/QuanLyNguoiDung/LayDanhSachKhoaHocDaXetDuyet",
       {
         TaiKhoan: taiKhoan,
         taiKhoan,

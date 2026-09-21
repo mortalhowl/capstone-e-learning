@@ -138,3 +138,21 @@ export const useUnenrolledCoursesByUser = (
     enabled: enabled && Boolean(taiKhoan),
   });
 
+export const useEnrolledCoursesByUser = (
+  taiKhoan: string,
+  enabled = true,
+) =>
+  useQuery({
+    queryKey: ["user-enrolled-courses", taiKhoan],
+    queryFn: () =>
+      userService.getEnrolledCoursesByUser(taiKhoan).then((res) => {
+        const raw = res.data || [];
+        return raw.map((item: Record<string, unknown>) => ({
+          maKhoaHoc: String(item.maKhoaHoc || item.MaKhoaHoc || ""),
+          tenKhoaHoc: String(item.tenKhoaHoc || item.TenKhoaHoc || ""),
+          biDanh: String(item.biDanh || item.BiDanh || ""),
+        }));
+      }),
+    enabled: enabled && Boolean(taiKhoan),
+  });
+
