@@ -4,7 +4,6 @@ import * as React from "react";
 import {
   Search,
   UserCheck,
-  UserX,
   Loader2,
   BookOpen,
   RefreshCw,
@@ -15,6 +14,7 @@ import {
   ChevronRight,
   Clock,
   CheckCheck,
+  Trash2,
 } from "lucide-react";
 
 import {
@@ -1184,7 +1184,7 @@ export function UserEnrollmentDialog({
                                 </span>
                               </TableCell>
 
-                              {/* Nút Thao tác: Hủy ghi danh */}
+                              {/* Nút Thao tác: Xóa khóa học của người dùng (13.2.5) */}
                               <TableCell className="text-right">
                                 <Button
                                   type="button"
@@ -1195,13 +1195,14 @@ export function UserEnrollmentDialog({
                                   }
                                   disabled={isProcessing}
                                   className="h-8 text-xs font-medium gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30"
+                                  title="Xóa khóa học này khỏi danh sách của người dùng"
                                 >
                                   {isProcessing ? (
                                     <Loader2 className="size-3.5 animate-spin" />
                                   ) : (
-                                    <UserX className="size-3.5" />
+                                    <Trash2 className="size-3.5" />
                                   )}
-                                  <span>Hủy ghi danh</span>
+                                  <span>Xóa khóa học</span>
                                 </Button>
                               </TableCell>
                             </TableRow>
@@ -1362,7 +1363,7 @@ export function UserEnrollmentDialog({
         </DialogContent>
       </Dialog>
 
-      {/* MODAL XÁC NHẬN HỦY GHI DANH KHÓA HỌC (13.2.2) */}
+      {/* MODAL XÁC NHẬN XÓA KHÓA HỌC CỦA NGƯỜI DÙNG (13.2.5) */}
       <Dialog
         open={Boolean(courseToConfirmUnenroll)}
         onOpenChange={(val) => !val && setCourseToConfirmUnenroll(null)}
@@ -1371,14 +1372,14 @@ export function UserEnrollmentDialog({
           <DialogHeader>
             <div className="flex items-center gap-2">
               <div className="size-9 rounded-full bg-destructive/10 text-destructive flex items-center justify-center shrink-0">
-                <UserX className="size-5" />
+                <Trash2 className="size-5" />
               </div>
               <div>
                 <DialogTitle className="text-base font-semibold text-destructive">
-                  Xác nhận hủy ghi danh khóa học
+                  Xóa khóa học của người dùng
                 </DialogTitle>
                 <DialogDescription className="text-xs text-muted-foreground mt-0.5">
-                  Bạn có chắc chắn muốn hủy ghi danh học viên này khỏi khóa học?
+                  Bạn có chắc chắn muốn xóa khóa học này khỏi danh sách của người dùng không?
                 </DialogDescription>
               </div>
             </div>
@@ -1442,9 +1443,9 @@ export function UserEnrollmentDialog({
               {unenrollMutation.isPending ? (
                 <Loader2 className="size-3.5 animate-spin" />
               ) : (
-                <UserX className="size-3.5" />
+                <Trash2 className="size-3.5" />
               )}
-              <span>Xác nhận hủy ghi danh</span>
+              <span>Xác nhận xóa</span>
             </Button>
           </div>
         </DialogContent>
