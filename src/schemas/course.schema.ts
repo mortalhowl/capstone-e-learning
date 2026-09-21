@@ -87,3 +87,5 @@ export interface UserEnrolledCourse {
   biDanh?: string;
   [key: string]: unknown;
 }
+
+export type UserPendingCourse = UserEnrolledCourse;

@@ -15,6 +15,7 @@ import {
   ChevronRight,
   Clock,
   CheckCheck,
+  Check,
 } from "lucide-react";
 
 import {
@@ -40,12 +41,19 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   useUnenrolledCoursesByUser,
   useEnrolledCoursesByUser,
+  usePendingCoursesByUser,
 } from "@/hooks/useUsers";
-import { useEnrollUser, useUnenroll } from "@/hooks/useCourses";
+import {
+  useEnrollUser,
+  useUnenroll,
+  useApproveEnrollment,
+  useRejectEnrollment,
+} from "@/hooks/useCourses";
 import type { UserItem } from "@/schemas/user.schema";
 import type {
   UnenrolledCourse,
   UserEnrolledCourse,
+  UserPendingCourse,
 } from "@/schemas/course.schema";
 
 interface UserEnrollmentDialogProps {
@@ -62,7 +70,7 @@ export function UserEnrollmentDialog({
   const taiKhoan = user?.taiKhoan || "";
   const isTeacher = user?.maLoaiNguoiDung === "GV";
 
-  // Tab state: "unenrolled" | "enrolled" | "pending"
+  // Tab state: "unenrolled" | "pending" | "enrolled"
   const [activeTab, setActiveTab] = React.useState<string>("unenrolled");
 
   // Search & Pagination state for unenrolled courses tab (13.2.1)
@@ -72,6 +80,10 @@ export function UserEnrollmentDialog({
   // Search & Pagination state for enrolled courses tab (13.2.2)
   const [searchEnrolled, setSearchEnrolled] = React.useState<string>("");
   const [pageEnrolled, setPageEnrolled] = React.useState<number>(1);
+
+  // Search & Pagination state for pending courses tab (13.2.3)
+  const [searchPending, setSearchPending] = React.useState<string>("");
+  const [pagePending, setPagePending] = React.useState<number>(1);
 
   // Modal xác nhận ghi danh khóa học (13.2.1)
   const [courseToConfirmEnroll, setCourseToConfirmEnroll] =
@@ -84,6 +96,10 @@ export function UserEnrollmentDialog({
   const [courseToConfirmUnenroll, setCourseToConfirmUnenroll] =
     React.useState<UserEnrolledCourse | null>(null);
   const [processingUnenrollCourseId, setProcessingUnenrollCourseId] =
+    React.useState<string | null>(null);
+
+  // Trạng thái đang xử lý Duyệt / Từ chối (13.2.3)
+  const [processingPendingCourseId, setProcessingPendingCourseId] =
     React.useState<string | null>(null);
 
   const pageSize = 10;
@@ -104,9 +120,19 @@ export function UserEnrollmentDialog({
     refetch: refetchEnrolled,
   } = useEnrolledCoursesByUser(taiKhoan, open && Boolean(taiKhoan));
 
+  // 3. API 13.2.3: LayDanhSachKhoaHocChoXetDuyet (Chờ xét duyệt)
+  const {
+    data: pendingCourses = [],
+    isLoading: isLoadingPending,
+    isFetching: isFetchingPending,
+    refetch: refetchPending,
+  } = usePendingCoursesByUser(taiKhoan, open && Boolean(taiKhoan));
+
   // Mutations
   const enrollUserMutation = useEnrollUser();
   const unenrollMutation = useUnenroll();
+  const approveMutation = useApproveEnrollment();
+  const rejectMutation = useRejectEnrollment();
 
   // Reset state when dialog closes
   const handleDialogChange = (nextOpen: boolean) => {
@@ -120,6 +146,10 @@ export function UserEnrollmentDialog({
       setPageEnrolled(1);
       setCourseToConfirmUnenroll(null);
       setProcessingUnenrollCourseId(null);
+
+      setSearchPending("");
+      setPagePending(1);
+      setProcessingPendingCourseId(null);
     }
     onOpenChange(nextOpen);
   };
@@ -174,6 +204,27 @@ export function UserEnrollmentDialog({
     return filteredEnrolled.slice(startIndex, startIndex + pageSize);
   }, [filteredEnrolled, pageEnrolled, pageSize]);
 
+  // Lọc danh sách khóa học chờ xét duyệt (13.2.3)
+  const filteredPending = React.useMemo(() => {
+    const term = searchPending.trim().toLowerCase();
+    if (!term) return pendingCourses;
+    return pendingCourses.filter((course) => {
+      const matchName = course.tenKhoaHoc?.toLowerCase().includes(term);
+      const matchCode = course.maKhoaHoc?.toLowerCase().includes(term);
+      const matchAlias = course.biDanh?.toLowerCase().includes(term);
+      return matchName || matchCode || matchAlias;
+    });
+  }, [pendingCourses, searchPending]);
+
+  const totalPendingPages = Math.max(
+    1,
+    Math.ceil(filteredPending.length / pageSize),
+  );
+  const paginatedPending = React.useMemo(() => {
+    const startIndex = (pagePending - 1) * pageSize;
+    return filteredPending.slice(startIndex, startIndex + pageSize);
+  }, [filteredPending, pagePending, pageSize]);
+
   // Thực hiện ghi danh khóa học cho học viên (13.2.1)
   const handleConfirmEnroll = async () => {
     if (!courseToConfirmEnroll || !user) return;
@@ -211,6 +262,44 @@ export function UserEnrollmentDialog({
       // Error handled by hook toast
     } finally {
       setProcessingUnenrollCourseId(null);
+    }
+  };
+
+  // Thực hiện Duyệt ghi danh khóa học chờ duyệt (13.2.3)
+  const handleApprove = async (course: UserPendingCourse) => {
+    if (!user) return;
+    setProcessingPendingCourseId(course.maKhoaHoc);
+    try {
+      await approveMutation.mutateAsync({
+        maKhoaHoc: course.maKhoaHoc,
+        taiKhoan: user.taiKhoan,
+      });
+      refetchPending();
+      refetchEnrolled();
+      refetchUnenrolled();
+    } catch {
+      // Error handled by hook toast
+    } finally {
+      setProcessingPendingCourseId(null);
+    }
+  };
+
+  // Thực hiện Từ chối khóa học chờ duyệt (13.2.3)
+  const handleReject = async (course: UserPendingCourse) => {
+    if (!user) return;
+    setProcessingPendingCourseId(course.maKhoaHoc);
+    try {
+      await rejectMutation.mutateAsync({
+        maKhoaHoc: course.maKhoaHoc,
+        taiKhoan: user.taiKhoan,
+      });
+      refetchPending();
+      refetchEnrolled();
+      refetchUnenrolled();
+    } catch {
+      // Error handled by hook toast
+    } finally {
+      setProcessingPendingCourseId(null);
     }
   };
 
@@ -311,6 +400,17 @@ export function UserEnrollmentDialog({
                   </div>
 
                   <div className="px-2.5 py-1 rounded bg-muted/60 border font-medium flex items-center gap-1.5">
+                    <Clock className="size-3.5 text-amber-500" />
+                    <span>
+                      Chờ duyệt:{" "}
+                      <strong className="text-foreground">
+                        {isLoadingPending ? "..." : pendingCourses.length}
+                      </strong>{" "}
+                      khóa
+                    </span>
+                  </div>
+
+                  <div className="px-2.5 py-1 rounded bg-muted/60 border font-medium flex items-center gap-1.5">
                     <BookOpen className="size-3.5 text-emerald-600 dark:text-emerald-400" />
                     <span>
                       Chưa ghi danh:{" "}
@@ -350,6 +450,22 @@ export function UserEnrollmentDialog({
                 </TabsTrigger>
 
                 <TabsTrigger
+                  value="pending"
+                  className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none px-1 h-full font-medium text-xs sm:text-sm gap-2 relative"
+                >
+                  <Clock className="size-4 text-amber-500" />
+                  <span>Khóa học chờ xét duyệt</span>
+                  {!isLoadingPending && (
+                    <Badge
+                      variant="secondary"
+                      className="ml-1 text-[11px] px-1.5 py-0 rounded-full font-mono bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                    >
+                      {pendingCourses.length}
+                    </Badge>
+                  )}
+                </TabsTrigger>
+
+                <TabsTrigger
                   value="enrolled"
                   className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none px-1 h-full font-medium text-xs sm:text-sm gap-2 relative"
                 >
@@ -363,16 +479,6 @@ export function UserEnrollmentDialog({
                       {enrolledCourses.length}
                     </Badge>
                   )}
-                </TabsTrigger>
-
-                <TabsTrigger
-                  value="pending"
-                  disabled
-                  className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:shadow-none rounded-none px-1 h-full font-medium text-xs sm:text-sm gap-2 relative opacity-50 cursor-not-allowed"
-                  title="Chức năng đang cập nhật (13.2.3)"
-                >
-                  <Clock className="size-4 text-amber-500" />
-                  <span>Khóa học chờ xét duyệt</span>
                 </TabsTrigger>
               </TabsList>
             </div>
@@ -641,7 +747,303 @@ export function UserEnrollmentDialog({
               )}
             </TabsContent>
 
-            {/* TAB 2: Khóa học đã ghi danh (13.2.2) */}
+            {/* TAB 2: Khóa học chờ xét duyệt (13.2.3) */}
+            <TabsContent
+              value="pending"
+              className="m-0 flex-1 flex flex-col min-h-0 outline-hidden"
+            >
+              {/* Toolbar: Tìm kiếm & Refresh */}
+              <div className="p-4 border-b bg-muted/10 flex items-center justify-between gap-3">
+                <div className="relative flex-1 max-w-sm">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                  <input
+                    type="text"
+                    value={searchPending}
+                    onChange={(e) => {
+                      setSearchPending(e.target.value);
+                      setPagePending(1);
+                    }}
+                    placeholder="Tìm theo tên hoặc mã khóa học chờ duyệt..."
+                    className="h-9 w-full rounded-md border border-input bg-background pl-9 pr-8 text-xs sm:text-sm focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring"
+                  />
+                  {searchPending && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSearchPending("");
+                        setPagePending(1);
+                      }}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="size-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-9 gap-1.5 text-xs"
+                    onClick={() => refetchPending()}
+                    disabled={isFetchingPending}
+                  >
+                    <RefreshCw
+                      className={`size-3.5 ${isFetchingPending ? "animate-spin" : ""}`}
+                    />
+                    <span className="hidden sm:inline">Làm mới</span>
+                  </Button>
+                </div>
+              </div>
+
+              {/* Body: Danh sách khóa học chờ xét duyệt */}
+              <div className="flex-1 overflow-auto p-4">
+                {isLoadingPending ? (
+                  <div className="space-y-3">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className="flex items-center justify-between p-3 border rounded-lg gap-4"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Skeleton className="size-10 rounded-md" />
+                          <div className="space-y-1.5">
+                            <Skeleton className="h-4 w-48" />
+                            <Skeleton className="h-3 w-28" />
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Skeleton className="h-8 w-16 rounded" />
+                          <Skeleton className="h-8 w-16 rounded" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : filteredPending.length === 0 ? (
+                  <div className="h-64 border rounded-lg border-dashed flex flex-col items-center justify-center p-6 text-center text-muted-foreground space-y-2">
+                    <div className="size-12 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
+                      <Clock className="size-6 text-amber-500" />
+                    </div>
+                    <p className="font-medium text-foreground text-sm">
+                      {searchPending
+                        ? "Không tìm thấy khóa học nào phù hợp"
+                        : "Không có khóa học nào đang chờ xét duyệt"}
+                    </p>
+                    <p className="text-xs max-w-sm">
+                      {searchPending
+                        ? `Không có kết quả nào khớp với "${searchPending}". Vui lòng thử từ khóa khác.`
+                        : "Học viên này hiện không có yêu cầu ghi danh nào đang chờ quản trị viên phê duyệt."}
+                    </p>
+                    {searchPending && (
+                      <Button
+                        variant="link"
+                        size="sm"
+                        onClick={() => {
+                          setSearchPending("");
+                          setPagePending(1);
+                        }}
+                        className="text-xs h-8"
+                      >
+                        Xóa tìm kiếm
+                      </Button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="rounded-lg border overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-muted/40 hover:bg-muted/40">
+                          <TableHead className="w-[50px] text-center">
+                            #
+                          </TableHead>
+                          <TableHead className="min-w-[240px]">
+                            Khóa học
+                          </TableHead>
+                          <TableHead className="min-w-[130px]">
+                            Bí danh
+                          </TableHead>
+                          <TableHead className="min-w-[110px]">
+                            Trạng thái
+                          </TableHead>
+                          <TableHead className="w-[160px] text-right">
+                            Thao tác
+                          </TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {paginatedPending.map((course, index) => {
+                          const isProcessing =
+                            processingPendingCourseId === course.maKhoaHoc;
+                          const isMutating =
+                            approveMutation.isPending ||
+                            rejectMutation.isPending;
+                          const rowNumber =
+                            (pagePending - 1) * pageSize + index + 1;
+
+                          return (
+                            <TableRow
+                              key={course.maKhoaHoc}
+                              className="hover:bg-muted/30 transition-colors"
+                            >
+                              {/* STT */}
+                              <TableCell className="text-center font-mono text-xs text-muted-foreground">
+                                {rowNumber}
+                              </TableCell>
+
+                              {/* Thông tin Khóa học */}
+                              <TableCell>
+                                <div className="flex items-center gap-3">
+                                  <div className="size-10 rounded-md border bg-amber-500/10 shrink-0 flex items-center justify-center">
+                                    <Clock className="size-4 text-amber-600 dark:text-amber-400" />
+                                  </div>
+                                  <div className="min-w-0 space-y-1">
+                                    <div
+                                      className="font-medium text-sm text-foreground line-clamp-1"
+                                      title={course.tenKhoaHoc}
+                                    >
+                                      {course.tenKhoaHoc}
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <Badge
+                                        variant="outline"
+                                        className="text-[10px] font-mono px-1.5 py-0"
+                                      >
+                                        {course.maKhoaHoc}
+                                      </Badge>
+                                    </div>
+                                  </div>
+                                </div>
+                              </TableCell>
+
+                              {/* Bí danh */}
+                              <TableCell>
+                                <span className="text-xs text-muted-foreground font-mono truncate max-w-[130px] block">
+                                  {course.biDanh || "—"}
+                                </span>
+                              </TableCell>
+
+                              {/* Trạng thái */}
+                              <TableCell>
+                                <Badge
+                                  variant="outline"
+                                  className="text-[11px] font-normal border-amber-500/30 text-amber-600 dark:text-amber-400 bg-amber-500/5 gap-1"
+                                >
+                                  <Clock className="size-3" />
+                                  <span>Chờ duyệt</span>
+                                </Badge>
+                              </TableCell>
+
+                              {/* Thao tác: Duyệt & Từ chối */}
+                              <TableCell className="text-right">
+                                <div className="flex items-center justify-end gap-1.5">
+                                  {/* Nút Duyệt */}
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    onClick={() => handleApprove(course)}
+                                    disabled={isMutating || isProcessing}
+                                    className="h-8 px-2.5 text-xs font-medium gap-1 bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
+                                    title="Duyệt ghi danh khóa học này"
+                                  >
+                                    {isProcessing &&
+                                    approveMutation.isPending ? (
+                                      <Loader2 className="size-3.5 animate-spin" />
+                                    ) : (
+                                      <Check className="size-3.5" />
+                                    )}
+                                    <span>Duyệt</span>
+                                  </Button>
+
+                                  {/* Nút Từ chối */}
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleReject(course)}
+                                    disabled={isMutating || isProcessing}
+                                    className="h-8 px-2.5 text-xs font-medium gap-1 text-destructive hover:bg-destructive/10 border-destructive/30"
+                                    title="Từ chối yêu cầu ghi danh"
+                                  >
+                                    {isProcessing &&
+                                    rejectMutation.isPending ? (
+                                      <Loader2 className="size-3.5 animate-spin" />
+                                    ) : (
+                                      <X className="size-3.5" />
+                                    )}
+                                    <span>Từ chối</span>
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </div>
+
+              {/* Footer Phân trang cho tab Khóa học chờ xét duyệt */}
+              {filteredPending.length > 0 && (
+                <div className="p-4 border-t bg-muted/20 flex items-center justify-between gap-4 text-xs">
+                  <div className="text-muted-foreground">
+                    Hiển thị{" "}
+                    <span className="font-medium text-foreground">
+                      {(pagePending - 1) * pageSize + 1}
+                    </span>{" "}
+                    -{" "}
+                    <span className="font-medium text-foreground">
+                      {Math.min(
+                        pagePending * pageSize,
+                        filteredPending.length,
+                      )}
+                    </span>{" "}
+                    trong tổng số{" "}
+                    <span className="font-medium text-foreground">
+                      {filteredPending.length}
+                    </span>{" "}
+                    khóa học
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="size-8"
+                      disabled={pagePending <= 1}
+                      onClick={() =>
+                        setPagePending((prev) => Math.max(1, prev - 1))
+                      }
+                    >
+                      <ChevronLeft className="size-4" />
+                      <span className="sr-only">Trang trước</span>
+                    </Button>
+                    <span className="px-2 font-medium">
+                      Trang {pagePending} / {totalPendingPages}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="size-8"
+                      disabled={pagePending >= totalPendingPages}
+                      onClick={() =>
+                        setPagePending((prev) =>
+                          Math.min(totalPendingPages, prev + 1),
+                        )
+                      }
+                    >
+                      <ChevronRight className="size-4" />
+                      <span className="sr-only">Trang sau</span>
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </TabsContent>
+
+            {/* TAB 3: Khóa học đã ghi danh (13.2.2) */}
             <TabsContent
               value="enrolled"
               className="m-0 flex-1 flex flex-col min-h-0 outline-hidden"

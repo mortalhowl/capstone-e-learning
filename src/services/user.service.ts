@@ -15,6 +15,7 @@ import type {
 import type {
   UnenrolledCourse,
   UserEnrolledCourse,
+  UserPendingCourse,
 } from "@/schemas/course.schema";
 
 export const userService = {
@@ -82,6 +83,20 @@ export const userService = {
   getEnrolledCoursesByUser: (taiKhoan: string) =>
     axiosInstance.post<UserEnrolledCourse[]>(
       "/api/QuanLyNguoiDung/LayDanhSachKhoaHocDaXetDuyet",
+      {
+        TaiKhoan: taiKhoan,
+        taiKhoan,
+      },
+      {
+        params: {
+          TaiKhoan: taiKhoan,
+        },
+      },
+    ),
+
+  getPendingCoursesByUser: (taiKhoan: string) =>
+    axiosInstance.post<UserPendingCourse[]>(
+      "/api/QuanLyNguoiDung/LayDanhSachKhoaHocChoXetDuyet",
       {
         TaiKhoan: taiKhoan,
         taiKhoan,

@@ -122,6 +122,9 @@ export const useEnrollUser = () => {
         queryKey: ["user-enrolled-courses", payload.taiKhoan],
       });
       queryClient.invalidateQueries({
+        queryKey: ["user-pending-courses", payload.taiKhoan],
+      });
+      queryClient.invalidateQueries({
         queryKey: courseKeys.detail(payload.maKhoaHoc),
       });
       queryClient.invalidateQueries({ queryKey: courseKeys.lists() });
@@ -150,6 +153,15 @@ export const useApproveEnrollment = () => {
         queryKey: ["unenrolled-users", payload.maKhoaHoc],
       });
       queryClient.invalidateQueries({
+        queryKey: ["user-pending-courses", payload.taiKhoan],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["user-enrolled-courses", payload.taiKhoan],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["user-unenrolled-courses", payload.taiKhoan],
+      });
+      queryClient.invalidateQueries({
         queryKey: courseKeys.detail(payload.maKhoaHoc),
       });
       queryClient.invalidateQueries({ queryKey: courseKeys.lists() });
@@ -176,6 +188,15 @@ export const useRejectEnrollment = () => {
       });
       queryClient.invalidateQueries({
         queryKey: ["unenrolled-users", payload.maKhoaHoc],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["user-pending-courses", payload.taiKhoan],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["user-enrolled-courses", payload.taiKhoan],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["user-unenrolled-courses", payload.taiKhoan],
       });
       queryClient.invalidateQueries({
         queryKey: courseKeys.detail(payload.maKhoaHoc),
@@ -250,6 +271,9 @@ export const useUnenroll = () => {
       });
       queryClient.invalidateQueries({
         queryKey: ["user-unenrolled-courses", payload.taiKhoan],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["user-pending-courses", payload.taiKhoan],
       });
     },
 
