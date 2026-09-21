@@ -114,7 +114,12 @@ export const courseService = {
     axiosInstance.post("/api/QuanLyKhoaHoc/DangKyKhoaHoc", payload),
 
   unenroll: (payload: CourseRegisterPayload) =>
-    axiosInstance.post("/api/QuanLyKhoaHoc/HuyGhiDanh", payload),
+    axiosInstance.post("/api/QuanLyKhoaHoc/HuyGhiDanh", {
+      maKhoaHoc: payload.maKhoaHoc,
+      taiKhoan: payload.taiKhoan,
+      MaKhoaHoc: payload.maKhoaHoc,
+      TaiKhoan: payload.taiKhoan,
+    }),
 
 
   createCourse: (payload: CreateCoursePayload) =>

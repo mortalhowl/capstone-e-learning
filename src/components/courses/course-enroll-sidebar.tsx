@@ -2,15 +2,32 @@
 
 import * as React from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { CheckCircle2, Video, Award, BookOpen, UserCheck, Loader2 } from "lucide-react";
+import { useRouter, useParams } from "next/navigation";
+import {
+  CheckCircle2,
+  Video,
+  Award,
+  BookOpen,
+  UserCheck,
+  Loader2,
+  UserX,
+  AlertTriangle,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import type { Course } from "@/schemas/course.schema";
 import { useAuthStore } from "@/stores/auth.store";
 import { useProfile } from "@/hooks/useUsers";
-import { useCourseRegister } from "@/hooks/useCourses";
+import { useCourseRegister, useUnenroll } from "@/hooks/useCourses";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface CourseEnrollSidebarProps {
   course: Course;
@@ -18,9 +35,12 @@ interface CourseEnrollSidebarProps {
 
 export function CourseEnrollSidebar({ course }: CourseEnrollSidebarProps) {
   const router = useRouter();
+  const params = useParams();
   const user = useAuthStore((state) => state.user);
   const { data: profile, isLoading: isLoadingProfile } = useProfile(Boolean(user));
   const registerMutation = useCourseRegister();
+  const unenrollMutation = useUnenroll();
+  const [isConfirmUnenrollOpen, setIsConfirmUnenrollOpen] = React.useState(false);
 
   const [imgSrc, setImgSrc] = React.useState<string>(course.hinhAnh);
   const [imgError, setImgError] = React.useState(false);
@@ -45,6 +65,49 @@ export function CourseEnrollSidebar({ course }: CourseEnrollSidebarProps) {
     });
   };
 
+  // 13.1.5: Hủy ghi danh (maKhoaHoc từ param url, taiKhoan từ localStorage sau khi đăng nhập)
+  const handleUnenroll = async () => {
+    // 1. maKhoaHoc: Lấy từ param URL
+    const rawCourseId = (params?.id as string) || course.maKhoaHoc;
+    const maKhoaHoc = decodeURIComponent(rawCourseId);
+
+    // 2. taiKhoan: Lấy từ localStorage sau khi đăng nhập (auth-storage hoặc USER_LOGIN)
+    let taiKhoan = user?.taiKhoan;
+    if (!taiKhoan && typeof window !== "undefined") {
+      try {
+        const rawAuth = localStorage.getItem("auth-storage");
+        if (rawAuth) {
+          const parsed = JSON.parse(rawAuth);
+          taiKhoan = parsed?.state?.user?.taiKhoan;
+        }
+        if (!taiKhoan) {
+          const rawUserLogin = localStorage.getItem("USER_LOGIN");
+          if (rawUserLogin) {
+            const parsed = JSON.parse(rawUserLogin);
+            taiKhoan = parsed?.taiKhoan;
+          }
+        }
+      } catch (err) {
+        console.error("Error reading taiKhoan from localStorage", err);
+      }
+    }
+
+    if (!taiKhoan) {
+      toast.error("Không tìm thấy thông tin tài khoản đăng nhập trong localStorage!");
+      return;
+    }
+
+    try {
+      await unenrollMutation.mutateAsync({
+        maKhoaHoc,
+        taiKhoan,
+      });
+      setIsConfirmUnenrollOpen(false);
+    } catch {
+      // Handled in mutation onError
+    }
+  };
+
   const benefits = [
     { text: "Học tập linh hoạt mọi lúc mọi nơi", icon: Video },
     { text: "Hơn 30 bài giảng thực chiến", icon: BookOpen },
@@ -53,7 +116,8 @@ export function CourseEnrollSidebar({ course }: CourseEnrollSidebarProps) {
   ];
 
   return (
-    <div className="sticky top-24 rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-md space-y-6">
+    <>
+      <div className="sticky top-24 rounded-2xl border border-border/80 bg-card p-5 sm:p-6 shadow-md space-y-6">
       <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-muted border border-border/50">
         {!imgError ? (
           <Image
@@ -82,17 +146,27 @@ export function CourseEnrollSidebar({ course }: CourseEnrollSidebarProps) {
 
       <div className="space-y-4">
         {isEnrolled ? (
-          <div className="space-y-2">
-            <Button
-              disabled
-              className="w-full h-11 text-sm font-semibold bg-emerald-600/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex items-center justify-center gap-2 opacity-100"
-            >
+          <div className="space-y-3">
+            <div className="w-full h-11 text-sm font-semibold bg-emerald-600/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 rounded-xl flex items-center justify-center gap-2">
               <CheckCircle2 className="size-4.5" />
               <span>Đã ghi danh khóa học</span>
-            </Button>
+            </div>
             <p className="text-[11px] text-center text-muted-foreground">
               Bạn đã tham gia khóa học này. Hãy vào hồ sơ để bắt đầu học!
             </p>
+            <Button
+              variant="outline"
+              onClick={() => setIsConfirmUnenrollOpen(true)}
+              disabled={unenrollMutation.isPending}
+              className="w-full h-9 text-xs font-medium text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/30 gap-1.5 cursor-pointer"
+            >
+              {unenrollMutation.isPending ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : (
+                <UserX className="size-3.5" />
+              )}
+              <span>Hủy ghi danh khóa học</span>
+            </Button>
           </div>
         ) : (
           <Button
@@ -129,5 +203,47 @@ export function CourseEnrollSidebar({ course }: CourseEnrollSidebarProps) {
         </div>
       </div>
     </div>
+
+    {/* Modal xác nhận hủy ghi danh (Chức năng 13.1.5) */}
+    <Dialog open={isConfirmUnenrollOpen} onOpenChange={setIsConfirmUnenrollOpen}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <div className="size-10 rounded-full bg-destructive/10 text-destructive flex items-center justify-center mb-2">
+            <AlertTriangle className="size-5" />
+          </div>
+          <DialogTitle className="text-base font-bold text-foreground">
+            Xác nhận hủy ghi danh
+          </DialogTitle>
+          <DialogDescription className="text-xs text-muted-foreground pt-1">
+            Bạn có chắc chắn muốn hủy ghi danh khỏi khóa học{" "}
+            <strong className="text-foreground font-semibold">&ldquo;{course.tenKhoaHoc}&rdquo;</strong>{" "}
+            không? Tiến độ học tập của bạn tại khóa học này có thể bị mất.
+          </DialogDescription>
+        </DialogHeader>
+
+        <DialogFooter className="gap-2 sm:gap-0 pt-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setIsConfirmUnenrollOpen(false)}
+            disabled={unenrollMutation.isPending}
+          >
+            Giữ lại
+          </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={handleUnenroll}
+            disabled={unenrollMutation.isPending}
+            className="gap-1.5"
+          >
+            {unenrollMutation.isPending && <Loader2 className="size-3.5 animate-spin" />}
+            <span>Hủy ghi danh</span>
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  </>
   );
 }
