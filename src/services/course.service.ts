@@ -101,7 +101,12 @@ export const courseService = {
     ),
 
   enrollCourse: (payload: CourseRegisterPayload) =>
-    axiosInstance.post("/api/QuanLyKhoaHoc/GhiDanhKhoaHoc", payload),
+    axiosInstance.post("/api/QuanLyKhoaHoc/GhiDanhKhoaHoc", {
+      maKhoaHoc: payload.maKhoaHoc,
+      taiKhoan: payload.taiKhoan,
+      MaKhoaHoc: payload.maKhoaHoc,
+      TaiKhoan: payload.taiKhoan,
+    }),
 
 
   // note: course regiser == enroll about meaning, but enroll should using with admin enroll

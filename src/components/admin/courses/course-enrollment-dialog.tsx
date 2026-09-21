@@ -75,6 +75,9 @@ export function CourseEnrollmentDialog({
   const [searchUnenrolled, setSearchUnenrolled] = React.useState<string>("");
   const [pageUnenrolled, setPageUnenrolled] = React.useState<number>(1);
 
+  // Học viên đang chờ xác thực ghi danh (Modal xác nhận 13.1.4)
+  const [userToConfirmEnroll, setUserToConfirmEnroll] = React.useState<Student | null>(null);
+
   // User đang thực hiện thao tác (để hiển thị loading spinner theo dòng)
   const [processingUser, setProcessingUser] = React.useState<string | null>(null);
   const pageSize = 10;
@@ -109,30 +112,19 @@ export function CourseEnrollmentDialog({
   const approveMutation = useApproveEnrollment();
   const rejectMutation = useRejectEnrollment();
 
-  // Reset khi mở modal hoặc đổi khóa học
-  React.useEffect(() => {
-    if (open) {
+  // Hàm đóng dialog và dọn dẹp state
+  const handleDialogChange = (nextOpen: boolean) => {
+    if (!nextOpen) {
       setSearchEnrolled("");
       setSearchPending("");
       setSearchUnenrolled("");
       setPageEnrolled(1);
       setPagePending(1);
       setPageUnenrolled(1);
+      setUserToConfirmEnroll(null);
     }
-  }, [open, maKhoaHoc]);
-
-  // Reset trang khi tìm kiếm thay đổi
-  React.useEffect(() => {
-    setPageEnrolled(1);
-  }, [searchEnrolled]);
-
-  React.useEffect(() => {
-    setPagePending(1);
-  }, [searchPending]);
-
-  React.useEffect(() => {
-    setPageUnenrolled(1);
-  }, [searchUnenrolled]);
+    onOpenChange(nextOpen);
+  };
 
   // Hàm lấy 2 ký tự viết tắt đại diện họ tên
   const getInitials = (name?: string) => {
@@ -202,15 +194,16 @@ export function CourseEnrollmentDialog({
     return filteredUnenrolled.slice(start, start + pageSize);
   }, [filteredUnenrolled, pageUnenrolled, pageSize]);
 
-  // Xử lý ghi danh (Chưa ghi danh -> Ghi danh)
-  const handleEnroll = async (taiKhoan: string) => {
-    if (!maKhoaHoc) return;
-    setProcessingUser(taiKhoan);
+  // Xử lý xác thực ghi danh từ modal xác nhận (Chức năng 13.1.4)
+  const handleConfirmEnroll = async () => {
+    if (!userToConfirmEnroll || !maKhoaHoc) return;
+    setProcessingUser(userToConfirmEnroll.taiKhoan);
     try {
       await enrollUserMutation.mutateAsync({
         maKhoaHoc,
-        taiKhoan,
+        taiKhoan: userToConfirmEnroll.taiKhoan,
       });
+      setUserToConfirmEnroll(null);
     } finally {
       setProcessingUser(null);
     }
@@ -268,8 +261,9 @@ export function CourseEnrollmentDialog({
     isFetchingEnrolled || isFetchingPending || isFetchingUnenrolled;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[850px] max-h-[90vh] flex flex-col p-0 overflow-hidden">
+    <>
+      <Dialog open={open} onOpenChange={handleDialogChange}>
+        <DialogContent className="sm:max-w-[850px] max-h-[90vh] flex flex-col p-0 overflow-hidden">
         {/* Header Dialog */}
         <DialogHeader className="p-5 pb-3 border-b bg-card">
           <div className="flex items-center justify-between pr-6">
@@ -369,13 +363,19 @@ export function CourseEnrollmentDialog({
                   type="text"
                   placeholder="Tìm học viên đã ghi danh theo họ tên, tài khoản hoặc bí danh..."
                   value={searchEnrolled}
-                  onChange={(e) => setSearchEnrolled(e.target.value)}
+                  onChange={(e) => {
+                    setSearchEnrolled(e.target.value);
+                    setPageEnrolled(1);
+                  }}
                   className="w-full h-9 pl-9 pr-8 rounded-md border border-input bg-background text-sm shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                 />
                 {searchEnrolled && (
                   <button
                     type="button"
-                    onClick={() => setSearchEnrolled("")}
+                    onClick={() => {
+                      setSearchEnrolled("");
+                      setPageEnrolled(1);
+                    }}
                     className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                     title="Xóa tìm kiếm"
                   >
@@ -594,13 +594,19 @@ export function CourseEnrollmentDialog({
                   type="text"
                   placeholder="Tìm học viên chờ duyệt theo họ tên, tài khoản hoặc bí danh..."
                   value={searchPending}
-                  onChange={(e) => setSearchPending(e.target.value)}
+                  onChange={(e) => {
+                    setSearchPending(e.target.value);
+                    setPagePending(1);
+                  }}
                   className="w-full h-9 pl-9 pr-8 rounded-md border border-input bg-background text-sm shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                 />
                 {searchPending && (
                   <button
                     type="button"
-                    onClick={() => setSearchPending("")}
+                    onClick={() => {
+                      setSearchPending("");
+                      setPagePending(1);
+                    }}
                     className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                     title="Xóa tìm kiếm"
                   >
@@ -847,13 +853,19 @@ export function CourseEnrollmentDialog({
                   type="text"
                   placeholder="Tìm người dùng chưa ghi danh theo họ tên, tài khoản hoặc bí danh..."
                   value={searchUnenrolled}
-                  onChange={(e) => setSearchUnenrolled(e.target.value)}
+                  onChange={(e) => {
+                    setSearchUnenrolled(e.target.value);
+                    setPageUnenrolled(1);
+                  }}
                   className="w-full h-9 pl-9 pr-8 rounded-md border border-input bg-background text-sm shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                 />
                 {searchUnenrolled && (
                   <button
                     type="button"
-                    onClick={() => setSearchUnenrolled("")}
+                    onClick={() => {
+                      setSearchUnenrolled("");
+                      setPageUnenrolled(1);
+                    }}
                     className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                     title="Xóa tìm kiếm"
                   >
@@ -975,13 +987,13 @@ export function CourseEnrollmentDialog({
                           <TableCell className="text-right">
                             <Button
                               size="sm"
-                              onClick={() => handleEnroll(user.taiKhoan)}
+                              onClick={() => setUserToConfirmEnroll(user)}
                               disabled={
                                 Boolean(processingUser) ||
                                 enrollUserMutation.isPending
                               }
                               className="h-8 px-2.5 gap-1.5 text-xs bg-primary text-primary-foreground font-medium"
-                              title="Ghi danh học viên này"
+                              title="Xác thực ghi danh người dùng này"
                             >
                               {isCurrentProcessing &&
                               enrollUserMutation.isPending ? (
@@ -1060,5 +1072,87 @@ export function CourseEnrollmentDialog({
         </Tabs>
       </DialogContent>
     </Dialog>
+
+    {/* Modal Xác thực ghi danh người dùng (13.1.4) */}
+    <Dialog
+      open={Boolean(userToConfirmEnroll)}
+      onOpenChange={(isOpen) => !isOpen && setUserToConfirmEnroll(null)}
+    >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-base flex items-center gap-2">
+              <UserCheck className="size-5 text-primary" />
+              <span>Xác thực người dùng ghi danh</span>
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground pt-1">
+              Bạn có chắc chắn muốn xác thực và ghi danh người dùng này vào khóa học không?
+            </DialogDescription>
+          </DialogHeader>
+
+          {userToConfirmEnroll && (
+            <div className="space-y-3 py-2">
+              <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
+                <Avatar className="size-10 border shrink-0">
+                  <AvatarFallback className="bg-primary/10 text-primary font-semibold text-xs">
+                    {getInitials(
+                      userToConfirmEnroll.hoTen || userToConfirmEnroll.taiKhoan,
+                    )}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-sm text-foreground truncate">
+                    {userToConfirmEnroll.hoTen || userToConfirmEnroll.taiKhoan}
+                  </p>
+                  <p className="text-xs text-muted-foreground font-mono">
+                    @{userToConfirmEnroll.taiKhoan}
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-3 rounded-lg border bg-muted/10 text-xs space-y-1.5">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Khóa học:</span>
+                  <span className="font-medium text-foreground truncate max-w-[220px]">
+                    {course?.tenKhoaHoc}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Mã khóa học:</span>
+                  <span className="font-mono text-muted-foreground">
+                    {course?.maKhoaHoc}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="flex items-center justify-end gap-2 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setUserToConfirmEnroll(null)}
+              disabled={enrollUserMutation.isPending}
+            >
+              Hủy bỏ
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              onClick={handleConfirmEnroll}
+              disabled={enrollUserMutation.isPending}
+              className="bg-primary text-primary-foreground gap-1.5"
+            >
+              {enrollUserMutation.isPending ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : (
+                <UserCheck className="size-3.5" />
+              )}
+              <span>Xác thực ghi danh</span>
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
