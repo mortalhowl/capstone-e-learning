@@ -86,6 +86,7 @@ export const courseService = {
     axiosInstance.post<Student[]>(
       "/api/QuanLyNguoiDung/LayDanhSachHocVienChoXetDuyet",
       {
+        MaKhoaHoc: maKhoaHoc,
         maKhoaHoc,
       },
     ),

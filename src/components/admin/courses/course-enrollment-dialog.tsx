@@ -14,6 +14,8 @@ import {
   RefreshCw,
   X,
   GraduationCap,
+  Clock,
+  Check,
 } from "lucide-react";
 
 import {
@@ -39,8 +41,11 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   useUnenrolledUsersByCourse,
   useStudentsByCourse,
+  usePendingStudentsByCourse,
   useEnrollUser,
   useUnenroll,
+  useApproveEnrollment,
+  useRejectEnrollment,
 } from "@/hooks/useCourses";
 import type { Course, Student } from "@/schemas/course.schema";
 
@@ -57,12 +62,15 @@ export function CourseEnrollmentDialog({
 }: CourseEnrollmentDialogProps) {
   const maKhoaHoc = course?.maKhoaHoc || "";
 
-  // Quản lý Tab: "enrolled" (Đã ghi danh) hoặc "unenrolled" (Chưa ghi danh)
+  // Quản lý Tab: "enrolled" (Đã ghi danh), "pending" (Chờ xét duyệt), "unenrolled" (Chưa ghi danh)
   const [activeTab, setActiveTab] = React.useState<string>("enrolled");
 
   // State tìm kiếm và phân trang riêng cho từng tab
   const [searchEnrolled, setSearchEnrolled] = React.useState<string>("");
   const [pageEnrolled, setPageEnrolled] = React.useState<number>(1);
+
+  const [searchPending, setSearchPending] = React.useState<string>("");
+  const [pagePending, setPagePending] = React.useState<number>(1);
 
   const [searchUnenrolled, setSearchUnenrolled] = React.useState<string>("");
   const [pageUnenrolled, setPageUnenrolled] = React.useState<number>(1);
@@ -79,7 +87,15 @@ export function CourseEnrollmentDialog({
     refetch: refetchEnrolled,
   } = useStudentsByCourse(maKhoaHoc, open && Boolean(maKhoaHoc));
 
-  // 2. API 13.1.1: LayDanhSachNguoiDungChuaGhiDanh (Chưa ghi danh)
+  // 2. API 13.1.3: LayDanhSachHocVienChoXetDuyet (Chờ xét duyệt)
+  const {
+    data: pendingStudents = [],
+    isLoading: isLoadingPending,
+    isFetching: isFetchingPending,
+    refetch: refetchPending,
+  } = usePendingStudentsByCourse(maKhoaHoc, open && Boolean(maKhoaHoc));
+
+  // 3. API 13.1.1: LayDanhSachNguoiDungChuaGhiDanh (Chưa ghi danh)
   const {
     data: unenrolledUsers = [],
     isLoading: isLoadingUnenrolled,
@@ -90,13 +106,17 @@ export function CourseEnrollmentDialog({
   // Hooks Mutation
   const enrollUserMutation = useEnrollUser();
   const unenrollMutation = useUnenroll();
+  const approveMutation = useApproveEnrollment();
+  const rejectMutation = useRejectEnrollment();
 
   // Reset khi mở modal hoặc đổi khóa học
   React.useEffect(() => {
     if (open) {
       setSearchEnrolled("");
+      setSearchPending("");
       setSearchUnenrolled("");
       setPageEnrolled(1);
+      setPagePending(1);
       setPageUnenrolled(1);
     }
   }, [open, maKhoaHoc]);
@@ -105,6 +125,10 @@ export function CourseEnrollmentDialog({
   React.useEffect(() => {
     setPageEnrolled(1);
   }, [searchEnrolled]);
+
+  React.useEffect(() => {
+    setPagePending(1);
+  }, [searchPending]);
 
   React.useEffect(() => {
     setPageUnenrolled(1);
@@ -130,6 +154,18 @@ export function CourseEnrollmentDialog({
     );
   }, [enrolledStudents, searchEnrolled]);
 
+  // Lọc học viên chờ xét duyệt
+  const filteredPending = React.useMemo(() => {
+    if (!searchPending.trim()) return pendingStudents;
+    const term = searchPending.toLowerCase();
+    return pendingStudents.filter(
+      (s) =>
+        s.hoTen?.toLowerCase().includes(term) ||
+        s.taiKhoan?.toLowerCase().includes(term) ||
+        s.biDanh?.toLowerCase().includes(term)
+    );
+  }, [pendingStudents, searchPending]);
+
   // Lọc học viên chưa ghi danh
   const filteredUnenrolled = React.useMemo(() => {
     if (!searchUnenrolled.trim()) return unenrolledUsers;
@@ -150,6 +186,14 @@ export function CourseEnrollmentDialog({
     return filteredEnrolled.slice(start, start + pageSize);
   }, [filteredEnrolled, pageEnrolled, pageSize]);
 
+  // Phân trang Chờ xét duyệt
+  const totalPendingCount = filteredPending.length;
+  const totalPendingPages = Math.ceil(totalPendingCount / pageSize) || 1;
+  const paginatedPending = React.useMemo(() => {
+    const start = (pagePending - 1) * pageSize;
+    return filteredPending.slice(start, start + pageSize);
+  }, [filteredPending, pagePending, pageSize]);
+
   // Phân trang Chưa ghi danh
   const totalUnenrolledCount = filteredUnenrolled.length;
   const totalUnenrolledPages = Math.ceil(totalUnenrolledCount / pageSize) || 1;
@@ -158,7 +202,7 @@ export function CourseEnrollmentDialog({
     return filteredUnenrolled.slice(start, start + pageSize);
   }, [filteredUnenrolled, pageUnenrolled, pageSize]);
 
-  // Xử lý ghi danh
+  // Xử lý ghi danh (Chưa ghi danh -> Ghi danh)
   const handleEnroll = async (taiKhoan: string) => {
     if (!maKhoaHoc) return;
     setProcessingUser(taiKhoan);
@@ -172,7 +216,7 @@ export function CourseEnrollmentDialog({
     }
   };
 
-  // Xử lý hủy ghi danh
+  // Xử lý hủy ghi danh (Đã ghi danh -> Hủy)
   const handleUnenroll = async (taiKhoan: string) => {
     if (!maKhoaHoc) return;
     setProcessingUser(taiKhoan);
@@ -186,16 +230,46 @@ export function CourseEnrollmentDialog({
     }
   };
 
+  // Xử lý duyệt ghi danh (Chờ duyệt -> Đã ghi danh)
+  const handleApprove = async (taiKhoan: string) => {
+    if (!maKhoaHoc) return;
+    setProcessingUser(taiKhoan);
+    try {
+      await approveMutation.mutateAsync({
+        maKhoaHoc,
+        taiKhoan,
+      });
+    } finally {
+      setProcessingUser(null);
+    }
+  };
+
+  // Xử lý từ chối ghi danh (Chờ duyệt -> Hủy)
+  const handleReject = async (taiKhoan: string) => {
+    if (!maKhoaHoc) return;
+    setProcessingUser(taiKhoan);
+    try {
+      await rejectMutation.mutateAsync({
+        maKhoaHoc,
+        taiKhoan,
+      });
+    } finally {
+      setProcessingUser(null);
+    }
+  };
+
   const handleRefreshAll = () => {
     refetchEnrolled();
+    refetchPending();
     refetchUnenrolled();
   };
 
-  const isRefreshing = isFetchingEnrolled || isFetchingUnenrolled;
+  const isRefreshing =
+    isFetchingEnrolled || isFetchingPending || isFetchingUnenrolled;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[820px] max-h-[90vh] flex flex-col p-0 overflow-hidden">
+      <DialogContent className="sm:max-w-[850px] max-h-[90vh] flex flex-col p-0 overflow-hidden">
         {/* Header Dialog */}
         <DialogHeader className="p-5 pb-3 border-b bg-card">
           <div className="flex items-center justify-between pr-6">
@@ -221,7 +295,7 @@ export function CourseEnrollmentDialog({
               onClick={handleRefreshAll}
               disabled={isRefreshing}
               className="h-8 gap-1.5 text-xs shrink-0"
-              title="Làm mới dữ liệu cả 2 danh sách"
+              title="Làm mới dữ liệu cả 3 danh sách"
             >
               <RefreshCw className={`size-3.5 ${isRefreshing ? "animate-spin" : ""}`} />
               <span className="hidden sm:inline">Làm mới</span>
@@ -229,7 +303,7 @@ export function CourseEnrollmentDialog({
           </div>
         </DialogHeader>
 
-        {/* Tabs Điều Hướng: Đã ghi danh & Chưa ghi danh */}
+        {/* Tabs Điều Hướng: Đã ghi danh / Chờ xét duyệt / Chưa ghi danh */}
         <Tabs
           value={activeTab}
           onValueChange={(val) => {
@@ -238,7 +312,7 @@ export function CourseEnrollmentDialog({
           className="flex-1 flex flex-col overflow-hidden"
         >
           <div className="px-5 pt-3 pb-0 border-b bg-muted/10">
-            <TabsList className="h-9 p-1 bg-muted/60 w-full sm:w-auto grid grid-cols-2 sm:inline-flex">
+            <TabsList className="h-9 p-1 bg-muted/60 w-full sm:w-auto grid grid-cols-3 sm:inline-flex">
               <TabsTrigger
                 value="enrolled"
                 className="gap-2 px-3 text-xs sm:text-sm font-medium"
@@ -247,6 +321,23 @@ export function CourseEnrollmentDialog({
                 <span>Đã ghi danh</span>
                 <span className="ml-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2 py-0.2 text-[11px] font-semibold">
                   {isLoadingEnrolled ? "..." : enrolledStudents.length}
+                </span>
+              </TabsTrigger>
+
+              <TabsTrigger
+                value="pending"
+                className="gap-2 px-3 text-xs sm:text-sm font-medium"
+              >
+                <Clock className="size-4" />
+                <span>Chờ xét duyệt</span>
+                <span
+                  className={`ml-1 rounded-full px-2 py-0.2 text-[11px] font-semibold ${
+                    pendingStudents.length > 0
+                      ? "bg-amber-500 text-white animate-pulse"
+                      : "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                  }`}
+                >
+                  {isLoadingPending ? "..." : pendingStudents.length}
                 </span>
               </TabsTrigger>
 
@@ -473,7 +564,9 @@ export function CourseEnrollmentDialog({
                     variant="outline"
                     size="sm"
                     onClick={() =>
-                      setPageEnrolled((p) => Math.min(totalEnrolledPages, p + 1))
+                      setPageEnrolled((p) =>
+                        Math.min(totalEnrolledPages, p + 1)
+                      )
                     }
                     disabled={pageEnrolled >= totalEnrolledPages}
                     className="h-8 px-2.5 gap-1 text-xs"
@@ -487,7 +580,260 @@ export function CourseEnrollmentDialog({
           </TabsContent>
 
           {/* ========================================================
-              TAB 2: CHƯA GHI DANH (API 13.1.1 - LayDanhSachNguoiDungChuaGhiDanh)
+              TAB 2: CHỜ XÉT DUYỆT (API 13.1.3 - LayDanhSachHocVienChoXetDuyet)
+             ======================================================== */}
+          <TabsContent
+            value="pending"
+            className="flex-1 flex flex-col overflow-hidden m-0 p-0"
+          >
+            {/* Thanh công cụ tìm kiếm */}
+            <div className="p-4 border-b bg-muted/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+                <input
+                  type="text"
+                  placeholder="Tìm học viên chờ duyệt theo họ tên, tài khoản hoặc bí danh..."
+                  value={searchPending}
+                  onChange={(e) => setSearchPending(e.target.value)}
+                  className="w-full h-9 pl-9 pr-8 rounded-md border border-input bg-background text-sm shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                />
+                {searchPending && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchPending("")}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    title="Xóa tìm kiếm"
+                  >
+                    <X className="size-4" />
+                  </button>
+                )}
+              </div>
+
+              <div className="text-xs text-muted-foreground shrink-0 font-medium">
+                Chờ xét duyệt:{" "}
+                <strong className="text-foreground font-semibold">
+                  {filteredPending.length}
+                </strong>{" "}
+                / {pendingStudents.length} học viên
+              </div>
+            </div>
+
+            {/* Danh sách học viên chờ xét duyệt */}
+            <div className="flex-1 overflow-y-auto min-h-[300px] max-h-[440px]">
+              {isLoadingPending ? (
+                /* Skeleton Loading State */
+                <div className="p-4 space-y-3">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div
+                      key={`skeleton-pending-${i}`}
+                      className="flex items-center justify-between p-2.5 rounded-lg border bg-card"
+                    >
+                      <div className="flex items-center gap-3 flex-1">
+                        <Skeleton className="size-9 rounded-full shrink-0" />
+                        <div className="space-y-1.5 flex-1 max-w-sm">
+                          <Skeleton className="h-4 w-40" />
+                          <Skeleton className="h-3 w-24" />
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Skeleton className="h-8 w-16 rounded-md" />
+                        <Skeleton className="h-8 w-16 rounded-md" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : filteredPending.length === 0 ? (
+                /* Empty State */
+                <div className="py-16 px-4 text-center flex flex-col items-center justify-center space-y-3">
+                  <div className="size-12 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                    <Clock className="size-6" />
+                  </div>
+                  <div className="space-y-1 max-w-md">
+                    <h4 className="text-base font-semibold text-foreground">
+                      {searchPending
+                        ? "Không tìm thấy học viên phù hợp"
+                        : "Không có yêu cầu chờ xét duyệt"}
+                    </h4>
+                    <p className="text-xs text-muted-foreground">
+                      {searchPending
+                        ? `Không có học viên chờ xét duyệt nào khớp với từ khóa "${searchPending}".`
+                        : "Hiện tại không có học viên nào gửi yêu cầu tham gia khóa học này."}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                /* Table State */
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/50 hover:bg-muted/50">
+                      <TableHead className="w-12 text-center">#</TableHead>
+                      <TableHead className="min-w-[220px]">Học viên</TableHead>
+                      <TableHead className="min-w-[140px]">Bí danh</TableHead>
+                      <TableHead className="min-w-[130px]">Trạng thái</TableHead>
+                      <TableHead className="w-[180px] text-right">Thao tác</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedPending.map((student, index) => {
+                      const isCurrentProcessing =
+                        processingUser === student.taiKhoan;
+                      const rowNumber =
+                        (pagePending - 1) * pageSize + index + 1;
+                      const displayName = student.hoTen || student.taiKhoan;
+
+                      return (
+                        <TableRow
+                          key={student.taiKhoan}
+                          className="hover:bg-muted/40 transition-colors"
+                        >
+                          <TableCell className="text-center font-mono text-xs text-muted-foreground">
+                            {rowNumber}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <Avatar className="size-9 border shrink-0">
+                                <AvatarFallback className="bg-amber-500/10 text-amber-600 dark:text-amber-400 font-semibold text-xs">
+                                  {getInitials(displayName)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="space-y-0.5 min-w-0">
+                                <div
+                                  className="font-medium text-sm text-foreground truncate max-w-[200px]"
+                                  title={displayName}
+                                >
+                                  {displayName}
+                                </div>
+                                <div className="text-xs text-muted-foreground font-mono">
+                                  @{student.taiKhoan}
+                                </div>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-xs text-muted-foreground font-mono">
+                              {student.biDanh || "—"}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant="outline"
+                              className="text-xs font-normal border-amber-500/30 text-amber-600 dark:text-amber-400 bg-amber-500/5"
+                            >
+                              Chờ duyệt
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              {/* Nút Duyệt ghi danh */}
+                              <Button
+                                size="sm"
+                                onClick={() => handleApprove(student.taiKhoan)}
+                                disabled={
+                                  Boolean(processingUser) ||
+                                  approveMutation.isPending ||
+                                  rejectMutation.isPending
+                                }
+                                className="h-8 px-2.5 gap-1 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-medium"
+                                title="Duyệt ghi danh học viên này"
+                              >
+                                {isCurrentProcessing &&
+                                approveMutation.isPending ? (
+                                  <Loader2 className="size-3.5 animate-spin" />
+                                ) : (
+                                  <Check className="size-3.5" />
+                                )}
+                                <span>Duyệt</span>
+                              </Button>
+
+                              {/* Nút Từ chối */}
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleReject(student.taiKhoan)}
+                                disabled={
+                                  Boolean(processingUser) ||
+                                  approveMutation.isPending ||
+                                  rejectMutation.isPending
+                                }
+                                className="h-8 px-2.5 gap-1 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/30"
+                                title="Từ chối yêu cầu tham gia"
+                              >
+                                {isCurrentProcessing &&
+                                rejectMutation.isPending ? (
+                                  <Loader2 className="size-3.5 animate-spin" />
+                                ) : (
+                                  <UserX className="size-3.5" />
+                                )}
+                                <span>Từ chối</span>
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              )}
+            </div>
+
+            {/* Phân trang Tab Chờ xét duyệt */}
+            {totalPendingPages > 1 && (
+              <div className="p-3 border-t bg-card flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
+                <div>
+                  Hiển thị{" "}
+                  <strong className="text-foreground">
+                    {(pagePending - 1) * pageSize + 1}
+                  </strong>{" "}
+                  -{" "}
+                  <strong className="text-foreground">
+                    {Math.min(pagePending * pageSize, totalPendingCount)}
+                  </strong>{" "}
+                  trong tổng số{" "}
+                  <strong className="text-foreground">
+                    {totalPendingCount}
+                  </strong>{" "}
+                  học viên
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPagePending((p) => Math.max(1, p - 1))}
+                    disabled={pagePending <= 1}
+                    className="h-8 px-2.5 gap-1 text-xs"
+                  >
+                    <ChevronLeft className="size-3.5" />
+                    <span>Trước</span>
+                  </Button>
+
+                  <span className="text-xs font-medium px-2">
+                    Trang{" "}
+                    <strong className="text-foreground">{pagePending}</strong>{" "}
+                    / {totalPendingPages}
+                  </span>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setPagePending((p) =>
+                        Math.min(totalPendingPages, p + 1)
+                      )
+                    }
+                    disabled={pagePending >= totalPendingPages}
+                    className="h-8 px-2.5 gap-1 text-xs"
+                  >
+                    <span>Sau</span>
+                    <ChevronRight className="size-3.5" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </TabsContent>
+
+          {/* ========================================================
+              TAB 3: CHƯA GHI DANH (API 13.1.1 - LayDanhSachNguoiDungChuaGhiDanh)
              ======================================================== */}
           <TabsContent
             value="unenrolled"
