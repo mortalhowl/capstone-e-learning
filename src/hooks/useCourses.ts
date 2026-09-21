@@ -141,8 +141,12 @@ export const useApproveEnrollment = () => {
   return useMutation({
     mutationFn: (payload: CourseRegisterPayload) =>
       courseService.enrollCourse(payload),
-    onSuccess: (_, payload) => {
-      toast.success("Duyệt ghi danh học viên thành công!");
+    onSuccess: (res, payload) => {
+      const message =
+        typeof res?.data === "string" && res.data
+          ? res.data
+          : "Ghi danh thành công";
+      toast.success(message);
       queryClient.invalidateQueries({
         queryKey: ["course-students", payload.maKhoaHoc],
       });

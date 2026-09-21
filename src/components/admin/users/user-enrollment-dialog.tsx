@@ -3,7 +3,7 @@
 import * as React from "react";
 import {
   Search,
-  UserPlus,
+  UserCheck,
   UserX,
   Loader2,
   BookOpen,
@@ -15,7 +15,6 @@ import {
   ChevronRight,
   Clock,
   CheckCheck,
-  Check,
 } from "lucide-react";
 
 import {
@@ -46,7 +45,6 @@ import {
 import {
   useEnrollUser,
   useUnenroll,
-  useApproveEnrollment,
   useRejectEnrollment,
 } from "@/hooks/useCourses";
 import type { UserItem } from "@/schemas/user.schema";
@@ -85,9 +83,9 @@ export function UserEnrollmentDialog({
   const [searchPending, setSearchPending] = React.useState<string>("");
   const [pagePending, setPagePending] = React.useState<number>(1);
 
-  // Modal xác nhận ghi danh khóa học (13.2.1)
+  // Modal xác nhận ghi danh khóa học (13.2.1 & 13.2.4)
   const [courseToConfirmEnroll, setCourseToConfirmEnroll] =
-    React.useState<UnenrolledCourse | null>(null);
+    React.useState<UnenrolledCourse | UserPendingCourse | null>(null);
   const [processingCourseId, setProcessingCourseId] = React.useState<
     string | null
   >(null);
@@ -131,7 +129,6 @@ export function UserEnrollmentDialog({
   // Mutations
   const enrollUserMutation = useEnrollUser();
   const unenrollMutation = useUnenroll();
-  const approveMutation = useApproveEnrollment();
   const rejectMutation = useRejectEnrollment();
 
   // Reset state when dialog closes
@@ -262,25 +259,6 @@ export function UserEnrollmentDialog({
       // Error handled by hook toast
     } finally {
       setProcessingUnenrollCourseId(null);
-    }
-  };
-
-  // Thực hiện Duyệt ghi danh khóa học chờ duyệt (13.2.3)
-  const handleApprove = async (course: UserPendingCourse) => {
-    if (!user) return;
-    setProcessingPendingCourseId(course.maKhoaHoc);
-    try {
-      await approveMutation.mutateAsync({
-        maKhoaHoc: course.maKhoaHoc,
-        taiKhoan: user.taiKhoan,
-      });
-      refetchPending();
-      refetchEnrolled();
-      refetchUnenrolled();
-    } catch {
-      // Error handled by hook toast
-    } finally {
-      setProcessingPendingCourseId(null);
     }
   };
 
@@ -661,7 +639,7 @@ export function UserEnrollmentDialog({
                                 </span>
                               </TableCell>
 
-                              {/* Nút Thao tác: Ghi danh */}
+                              {/* Nút Thao tác: Xác thực ghi danh */}
                               <TableCell className="text-right">
                                 <Button
                                   type="button"
@@ -670,13 +648,14 @@ export function UserEnrollmentDialog({
                                   onClick={() => setCourseToConfirmEnroll(course)}
                                   disabled={isProcessing}
                                   className="h-8 text-xs font-medium gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
+                                  title="Xác thực khóa học đó ghi danh cho người dùng"
                                 >
                                   {isProcessing ? (
                                     <Loader2 className="size-3.5 animate-spin" />
                                   ) : (
-                                    <UserPlus className="size-3.5" />
+                                    <UserCheck className="size-3.5" />
                                   )}
-                                  <span>Ghi danh</span>
+                                  <span>Xác thực ghi danh</span>
                                 </Button>
                               </TableCell>
                             </TableRow>
@@ -876,7 +855,7 @@ export function UserEnrollmentDialog({
                           const isProcessing =
                             processingPendingCourseId === course.maKhoaHoc;
                           const isMutating =
-                            approveMutation.isPending ||
+                            enrollUserMutation.isPending ||
                             rejectMutation.isPending;
                           const rowNumber =
                             (pagePending - 1) * pageSize + index + 1;
@@ -937,22 +916,17 @@ export function UserEnrollmentDialog({
                               {/* Thao tác: Duyệt & Từ chối */}
                               <TableCell className="text-right">
                                 <div className="flex items-center justify-end gap-1.5">
-                                  {/* Nút Duyệt */}
+                                  {/* Nút Xác thực ghi danh */}
                                   <Button
                                     type="button"
                                     size="sm"
-                                    onClick={() => handleApprove(course)}
+                                    onClick={() => setCourseToConfirmEnroll(course)}
                                     disabled={isMutating || isProcessing}
                                     className="h-8 px-2.5 text-xs font-medium gap-1 bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
-                                    title="Duyệt ghi danh khóa học này"
+                                    title="Xác thực khóa học đó ghi danh cho người dùng"
                                   >
-                                    {isProcessing &&
-                                    approveMutation.isPending ? (
-                                      <Loader2 className="size-3.5 animate-spin" />
-                                    ) : (
-                                      <Check className="size-3.5" />
-                                    )}
-                                    <span>Duyệt</span>
+                                    <UserCheck className="size-3.5" />
+                                    <span>Xác thực</span>
                                   </Button>
 
                                   {/* Nút Từ chối */}
@@ -1310,14 +1284,14 @@ export function UserEnrollmentDialog({
           <DialogHeader>
             <div className="flex items-center gap-2">
               <div className="size-9 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">
-                <UserPlus className="size-5" />
+                <UserCheck className="size-5" />
               </div>
               <div>
                 <DialogTitle className="text-base font-semibold">
-                  Xác nhận ghi danh khóa học
+                  Xác thực khóa học ghi danh cho người dùng
                 </DialogTitle>
                 <DialogDescription className="text-xs text-muted-foreground mt-0.5">
-                  Bạn có chắc chắn muốn ghi danh học viên này vào khóa học?
+                  Bạn có chắc chắn muốn xác thực ghi danh khóa học này cho người dùng không?
                 </DialogDescription>
               </div>
             </div>
@@ -1380,9 +1354,9 @@ export function UserEnrollmentDialog({
               {enrollUserMutation.isPending ? (
                 <Loader2 className="size-3.5 animate-spin" />
               ) : (
-                <UserPlus className="size-3.5" />
+                <UserCheck className="size-3.5" />
               )}
-              <span>Xác nhận ghi danh</span>
+              <span>Xác thực ghi danh</span>
             </Button>
           </div>
         </DialogContent>
