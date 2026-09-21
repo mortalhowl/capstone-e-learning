@@ -228,6 +228,9 @@ export const useUnenroll = () => {
       queryClient.invalidateQueries({
         queryKey: ["pending-students", payload.maKhoaHoc],
       });
+      queryClient.invalidateQueries({
+        queryKey: ["unenrolled-users", payload.maKhoaHoc],
+      });
     },
 
     onError: (error: AxiosError<string>) => {
