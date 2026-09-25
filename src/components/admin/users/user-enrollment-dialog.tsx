@@ -4,6 +4,7 @@ import * as React from "react";
 import {
   Search,
   UserCheck,
+  UserPlus,
   Loader2,
   BookOpen,
   RefreshCw,
@@ -43,10 +44,12 @@ import {
   usePendingCoursesByUser,
 } from "@/hooks/useUsers";
 import {
+  useCourses,
   useEnrollUser,
   useUnenroll,
   useRejectEnrollment,
 } from "@/hooks/useCourses";
+import { useAuthStore } from "@/stores/auth.store";
 import type { UserItem } from "@/schemas/user.schema";
 import type {
   UnenrolledCourse,
@@ -70,6 +73,15 @@ export function UserEnrollmentDialog({
 
   // Tab state: "unenrolled" | "pending" | "enrolled"
   const [activeTab, setActiveTab] = React.useState<string>("unenrolled");
+  const [quickEnrollCourseId, setQuickEnrollCourseId] = React.useState<string>("");
+
+  // Tự động chuyển về tab "unenrolled" mỗi khi mở dialog
+  React.useEffect(() => {
+    if (open) {
+      setActiveTab("unenrolled");
+      setQuickEnrollCourseId("");
+    }
+  }, [open]);
 
   // Search & Pagination state for unenrolled courses tab (13.2.1)
   const [searchUnenrolled, setSearchUnenrolled] = React.useState<string>("");
@@ -83,9 +95,6 @@ export function UserEnrollmentDialog({
   const [searchPending, setSearchPending] = React.useState<string>("");
   const [pagePending, setPagePending] = React.useState<number>(1);
 
-  // Modal xác nhận ghi danh khóa học (13.2.1 & 13.2.4)
-  const [courseToConfirmEnroll, setCourseToConfirmEnroll] =
-    React.useState<UnenrolledCourse | UserPendingCourse | null>(null);
   const [processingCourseId, setProcessingCourseId] = React.useState<
     string | null
   >(null);
@@ -131,12 +140,51 @@ export function UserEnrollmentDialog({
   const unenrollMutation = useUnenroll();
   const rejectMutation = useRejectEnrollment();
 
+  // Lấy thông tin tài khoản admin đang đăng nhập để ưu tiên khóa học do admin này tạo (Yêu cầu 1)
+  const currentAdmin = useAuthStore((state) => state.user);
+  const currentUsername = currentAdmin?.taiKhoan || "";
+  const { data: allAdminCourses = [] } = useCourses("");
+
+  const myCourseIds = React.useMemo(() => {
+    if (!currentUsername) return new Set<string>();
+    return new Set(
+      allAdminCourses
+        .filter(
+          (c) =>
+            c.nguoiTao?.taiKhoan?.toLowerCase() ===
+            currentUsername.toLowerCase(),
+        )
+        .map((c) => c.maKhoaHoc),
+    );
+  }, [allAdminCourses, currentUsername]);
+
+  // Danh sách khóa học có thể ghi danh nhanh (lọc từ allAdminCourses, loại bỏ các khóa học đã ghi danh)
+  const enrolledCourseIdSet = React.useMemo(() => {
+    return new Set(enrolledCourses.map((c) => c.maKhoaHoc));
+  }, [enrolledCourses]);
+
+  const availableQuickCourses = React.useMemo(() => {
+    return allAdminCourses
+      .filter(
+        (c) =>
+          Boolean(c.maKhoaHoc?.trim()) &&
+          !enrolledCourseIdSet.has(c.maKhoaHoc),
+      )
+      .sort((a, b) => {
+        const isAMine = myCourseIds.has(a.maKhoaHoc);
+        const isBMine = myCourseIds.has(b.maKhoaHoc);
+        if (isAMine && !isBMine) return -1;
+        if (!isAMine && isBMine) return 1;
+        return a.tenKhoaHoc.localeCompare(b.tenKhoaHoc);
+      });
+  }, [allAdminCourses, enrolledCourseIdSet, myCourseIds]);
+
   // Reset state when dialog closes
   const handleDialogChange = (nextOpen: boolean) => {
     if (!nextOpen) {
       setSearchUnenrolled("");
       setPageUnenrolled(1);
-      setCourseToConfirmEnroll(null);
+      setQuickEnrollCourseId("");
       setProcessingCourseId(null);
 
       setSearchEnrolled("");
@@ -162,14 +210,25 @@ export function UserEnrollmentDialog({
   // Lọc danh sách khóa học chưa ghi danh (13.2.1)
   const filteredUnenrolled = React.useMemo(() => {
     const term = searchUnenrolled.trim().toLowerCase();
-    if (!term) return unenrolledCourses;
-    return unenrolledCourses.filter((course) => {
-      const matchName = course.tenKhoaHoc?.toLowerCase().includes(term);
-      const matchCode = course.maKhoaHoc?.toLowerCase().includes(term);
-      const matchAlias = course.biDanh?.toLowerCase().includes(term);
-      return matchName || matchCode || matchAlias;
+    let list = unenrolledCourses;
+    if (term) {
+      list = unenrolledCourses.filter((course) => {
+        const matchName = course.tenKhoaHoc?.toLowerCase().includes(term);
+        const matchCode = course.maKhoaHoc?.toLowerCase().includes(term);
+        const matchAlias = course.biDanh?.toLowerCase().includes(term);
+        return matchName || matchCode || matchAlias;
+      });
+    }
+
+    // Sắp xếp ưu tiên: Khóa học do admin hiện tại tạo sẽ lên ĐẦU TIÊN
+    return [...list].sort((a, b) => {
+      const isAMine = myCourseIds.has(a.maKhoaHoc);
+      const isBMine = myCourseIds.has(b.maKhoaHoc);
+      if (isAMine && !isBMine) return -1;
+      if (!isAMine && isBMine) return 1;
+      return 0;
     });
-  }, [unenrolledCourses, searchUnenrolled]);
+  }, [unenrolledCourses, searchUnenrolled, myCourseIds]);
 
   const totalUnenrolledPages = Math.max(
     1,
@@ -223,22 +282,40 @@ export function UserEnrollmentDialog({
   }, [filteredPending, pagePending, pageSize]);
 
   // Thực hiện ghi danh khóa học cho học viên (13.2.1)
-  const handleConfirmEnroll = async () => {
-    if (!courseToConfirmEnroll || !user) return;
-    const targetCourse = courseToConfirmEnroll;
-    setProcessingCourseId(targetCourse.maKhoaHoc);
+  const handleEnroll = async (maKhoaHoc: string) => {
+    if (!maKhoaHoc || !user) return;
+    setProcessingCourseId(maKhoaHoc);
     try {
       await enrollUserMutation.mutateAsync({
-        maKhoaHoc: targetCourse.maKhoaHoc,
+        maKhoaHoc,
         taiKhoan: user.taiKhoan,
       });
-      setCourseToConfirmEnroll(null);
       refetchUnenrolled();
       refetchEnrolled();
+      refetchPending();
     } catch {
       // Error handled by hook toast
     } finally {
       setProcessingCourseId(null);
+    }
+  };
+
+  // Duyệt ghi danh cho học viên từ tab chờ duyệt (13.2.3)
+  const handleApprove = async (course: UserPendingCourse) => {
+    if (!user || !course.maKhoaHoc) return;
+    setProcessingPendingCourseId(course.maKhoaHoc);
+    try {
+      await enrollUserMutation.mutateAsync({
+        maKhoaHoc: course.maKhoaHoc,
+        taiKhoan: user.taiKhoan,
+      });
+      refetchPending();
+      refetchEnrolled();
+      refetchUnenrolled();
+    } catch {
+      // Error handled by hook toast
+    } finally {
+      setProcessingPendingCourseId(null);
     }
   };
 
@@ -466,6 +543,46 @@ export function UserEnrollmentDialog({
               value="unenrolled"
               className="m-0 flex-1 flex flex-col min-h-0 outline-hidden"
             >
+              {/* Thanh Ghi danh nhanh vào khóa học */}
+              <div className="p-3.5 bg-primary/5 border-b flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-2 text-xs font-semibold text-foreground shrink-0">
+                  <UserPlus className="size-4 text-primary" />
+                  <span>Ghi danh nhanh vào khóa học:</span>
+                </div>
+                <div className="flex items-center gap-2 flex-1 max-w-lg">
+                  <select
+                    value={quickEnrollCourseId}
+                    onChange={(e) => setQuickEnrollCourseId(e.target.value)}
+                    className="w-full h-8 px-2.5 rounded-md border border-input bg-background text-xs shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  >
+                    <option value="">-- Chọn khóa học để ghi danh ngay --</option>
+                    {availableQuickCourses.map((c) => (
+                      <option key={c.maKhoaHoc} value={c.maKhoaHoc}>
+                        {c.tenKhoaHoc} ({c.maKhoaHoc}) {myCourseIds.has(c.maKhoaHoc) ? "★ Của bạn" : ""}
+                      </option>
+                    ))}
+                  </select>
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={!quickEnrollCourseId || processingCourseId === quickEnrollCourseId}
+                    onClick={async () => {
+                      if (!quickEnrollCourseId) return;
+                      await handleEnroll(quickEnrollCourseId);
+                      setQuickEnrollCourseId("");
+                    }}
+                    className="h-8 px-3 text-xs gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground shrink-0 font-medium cursor-pointer"
+                  >
+                    {processingCourseId === quickEnrollCourseId ? (
+                      <Loader2 className="size-3.5 animate-spin" />
+                    ) : (
+                      <UserPlus className="size-3.5" />
+                    )}
+                    <span>Ghi danh</span>
+                  </Button>
+                </div>
+              </div>
+
               {/* Toolbar: Tìm kiếm & Refresh */}
               <div className="p-4 border-b bg-muted/10 flex items-center justify-between gap-3">
                 <div className="relative flex-1 max-w-sm">
@@ -561,7 +678,7 @@ export function UserEnrollmentDialog({
                     )}
                   </div>
                 ) : (
-                  <div className="rounded-lg border overflow-hidden">
+                  <div className="rounded-lg border overflow-x-auto">
                     <Table>
                       <TableHeader>
                         <TableRow className="bg-muted/40 hover:bg-muted/40">
@@ -574,7 +691,7 @@ export function UserEnrollmentDialog({
                           <TableHead className="min-w-[140px]">
                             Bí danh
                           </TableHead>
-                          <TableHead className="w-[130px] text-right">
+                          <TableHead className="w-[120px] text-right">
                             Thao tác
                           </TableHead>
                         </TableRow>
@@ -583,13 +700,16 @@ export function UserEnrollmentDialog({
                         {paginatedUnenrolled.map((course, index) => {
                           const isProcessing =
                             processingCourseId === course.maKhoaHoc;
+                          const isMyCourse = myCourseIds.has(course.maKhoaHoc);
                           const rowNumber =
                             (pageUnenrolled - 1) * pageSize + index + 1;
 
                           return (
                             <TableRow
                               key={course.maKhoaHoc}
-                              className="hover:bg-muted/30 transition-colors"
+                              className={`hover:bg-muted/30 transition-colors ${
+                                isMyCourse ? "bg-primary/[0.04]" : ""
+                              }`}
                             >
                               {/* STT */}
                               <TableCell className="text-center font-mono text-xs text-muted-foreground">
@@ -627,6 +747,14 @@ export function UserEnrollmentDialog({
                                       >
                                         {course.maKhoaHoc}
                                       </Badge>
+                                      {isMyCourse && (
+                                        <Badge
+                                          variant="outline"
+                                          className="text-[10px] px-1 py-0 h-4 bg-primary/10 text-primary border-primary/20 font-normal"
+                                        >
+                                          Của bạn
+                                        </Badge>
+                                      )}
                                     </div>
                                   </div>
                                 </div>
@@ -639,23 +767,23 @@ export function UserEnrollmentDialog({
                                 </span>
                               </TableCell>
 
-                              {/* Nút Thao tác: Xác thực ghi danh */}
+                              {/* Nút Thao tác: Ghi danh */}
                               <TableCell className="text-right">
                                 <Button
                                   type="button"
                                   size="sm"
                                   variant="default"
-                                  onClick={() => setCourseToConfirmEnroll(course)}
+                                  onClick={() => handleEnroll(course.maKhoaHoc)}
                                   disabled={isProcessing}
-                                  className="h-8 text-xs font-medium gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
-                                  title="Xác thực khóa học đó ghi danh cho người dùng"
+                                  className="h-8 text-xs font-medium gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground shadow-xs cursor-pointer"
+                                  title="Ghi danh học viên vào khóa học này"
                                 >
                                   {isProcessing ? (
                                     <Loader2 className="size-3.5 animate-spin" />
                                   ) : (
-                                    <UserCheck className="size-3.5" />
+                                    <UserPlus className="size-3.5" />
                                   )}
-                                  <span>Xác thực ghi danh</span>
+                                  <span>Ghi danh</span>
                                 </Button>
                               </TableCell>
                             </TableRow>
@@ -829,7 +957,7 @@ export function UserEnrollmentDialog({
                     )}
                   </div>
                 ) : (
-                  <div className="rounded-lg border overflow-hidden">
+                  <div className="rounded-lg border overflow-x-auto">
                     <Table>
                       <TableHeader>
                         <TableRow className="bg-muted/40 hover:bg-muted/40">
@@ -845,7 +973,7 @@ export function UserEnrollmentDialog({
                           <TableHead className="min-w-[110px]">
                             Trạng thái
                           </TableHead>
-                          <TableHead className="w-[160px] text-right">
+                          <TableHead className="w-[180px] text-right">
                             Thao tác
                           </TableHead>
                         </TableRow>
@@ -916,17 +1044,21 @@ export function UserEnrollmentDialog({
                               {/* Thao tác: Duyệt & Từ chối */}
                               <TableCell className="text-right">
                                 <div className="flex items-center justify-end gap-1.5">
-                                  {/* Nút Xác thực ghi danh */}
+                                  {/* Nút Duyệt ghi danh */}
                                   <Button
                                     type="button"
                                     size="sm"
-                                    onClick={() => setCourseToConfirmEnroll(course)}
+                                    onClick={() => handleApprove(course)}
                                     disabled={isMutating || isProcessing}
-                                    className="h-8 px-2.5 text-xs font-medium gap-1 bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
-                                    title="Xác thực khóa học đó ghi danh cho người dùng"
+                                    className="h-8 px-2.5 text-xs font-medium gap-1 bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs cursor-pointer"
+                                    title="Duyệt ghi danh khóa học cho học viên"
                                   >
-                                    <UserCheck className="size-3.5" />
-                                    <span>Xác thực</span>
+                                    {isProcessing && enrollUserMutation.isPending ? (
+                                      <Loader2 className="size-3.5 animate-spin" />
+                                    ) : (
+                                      <UserCheck className="size-3.5" />
+                                    )}
+                                    <span>Duyệt</span>
                                   </Button>
 
                                   {/* Nút Từ chối */}
@@ -1117,7 +1249,7 @@ export function UserEnrollmentDialog({
                     )}
                   </div>
                 ) : (
-                  <div className="rounded-lg border overflow-hidden">
+                  <div className="rounded-lg border overflow-x-auto">
                     <Table>
                       <TableHeader>
                         <TableRow className="bg-muted/40 hover:bg-muted/40">
@@ -1184,7 +1316,7 @@ export function UserEnrollmentDialog({
                                 </span>
                               </TableCell>
 
-                              {/* Nút Thao tác: Xóa khóa học của người dùng (13.2.5) */}
+                              {/* Nút Thao tác: Hủy ghi danh */}
                               <TableCell className="text-right">
                                 <Button
                                   type="button"
@@ -1194,15 +1326,15 @@ export function UserEnrollmentDialog({
                                     setCourseToConfirmUnenroll(course)
                                   }
                                   disabled={isProcessing}
-                                  className="h-8 text-xs font-medium gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30"
-                                  title="Xóa khóa học này khỏi danh sách của người dùng"
+                                  className="h-8 text-xs font-medium gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30 cursor-pointer"
+                                  title="Hủy ghi danh khóa học này của học viên"
                                 >
                                   {isProcessing ? (
                                     <Loader2 className="size-3.5 animate-spin" />
                                   ) : (
                                     <Trash2 className="size-3.5" />
                                   )}
-                                  <span>Xóa khóa học</span>
+                                  <span>Hủy ghi danh</span>
                                 </Button>
                               </TableCell>
                             </TableRow>
@@ -1276,94 +1408,7 @@ export function UserEnrollmentDialog({
         </DialogContent>
       </Dialog>
 
-      {/* MODAL XÁC NHẬN GHI DANH KHÓA HỌC (13.2.1) */}
-      <Dialog
-        open={Boolean(courseToConfirmEnroll)}
-        onOpenChange={(val) => !val && setCourseToConfirmEnroll(null)}
-      >
-        <DialogContent className="max-w-md p-6">
-          <DialogHeader>
-            <div className="flex items-center gap-2">
-              <div className="size-9 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">
-                <UserCheck className="size-5" />
-              </div>
-              <div>
-                <DialogTitle className="text-base font-semibold">
-                  Xác thực khóa học ghi danh cho người dùng
-                </DialogTitle>
-                <DialogDescription className="text-xs text-muted-foreground mt-0.5">
-                  Bạn có chắc chắn muốn xác thực ghi danh khóa học này cho người dùng không?
-                </DialogDescription>
-              </div>
-            </div>
-          </DialogHeader>
-
-          {courseToConfirmEnroll && user && (
-            <div className="space-y-3 my-2">
-              {/* Thông tin học viên */}
-              <div className="p-3 rounded-lg border bg-muted/20 flex items-center gap-3">
-                <Avatar className="size-9 border shrink-0">
-                  <AvatarFallback className="bg-primary/10 text-primary font-semibold text-xs">
-                    {getInitials(user.hoTen)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-sm text-foreground truncate">
-                    {user.hoTen}
-                  </p>
-                  <p className="text-xs text-muted-foreground font-mono">
-                    @{user.taiKhoan}
-                  </p>
-                </div>
-              </div>
-
-              {/* Thông tin khóa học */}
-              <div className="p-3 rounded-lg border bg-muted/10 text-xs space-y-1.5">
-                <div className="flex justify-between items-start gap-2">
-                  <span className="text-muted-foreground shrink-0">Khóa học:</span>
-                  <span className="font-medium text-foreground text-right">
-                    {courseToConfirmEnroll.tenKhoaHoc}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Mã khóa học:</span>
-                  <span className="font-mono text-muted-foreground">
-                    {courseToConfirmEnroll.maKhoaHoc}
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div className="flex items-center justify-end gap-2 pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setCourseToConfirmEnroll(null)}
-              disabled={enrollUserMutation.isPending}
-            >
-              Hủy bỏ
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              onClick={handleConfirmEnroll}
-              disabled={enrollUserMutation.isPending}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5"
-            >
-              {enrollUserMutation.isPending ? (
-                <Loader2 className="size-3.5 animate-spin" />
-              ) : (
-                <UserCheck className="size-3.5" />
-              )}
-              <span>Xác thực ghi danh</span>
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* MODAL XÁC NHẬN XÓA KHÓA HỌC CỦA NGƯỜI DÙNG (13.2.5) */}
+      {/* MODAL XÁC NHẬN HỦY GHI DANH KHÓA HỌC (13.2.2) */}
       <Dialog
         open={Boolean(courseToConfirmUnenroll)}
         onOpenChange={(val) => !val && setCourseToConfirmUnenroll(null)}
@@ -1376,10 +1421,10 @@ export function UserEnrollmentDialog({
               </div>
               <div>
                 <DialogTitle className="text-base font-semibold text-destructive">
-                  Xóa khóa học của người dùng
+                  Hủy ghi danh khóa học
                 </DialogTitle>
                 <DialogDescription className="text-xs text-muted-foreground mt-0.5">
-                  Bạn có chắc chắn muốn xóa khóa học này khỏi danh sách của người dùng không?
+                  Bạn có chắc chắn muốn hủy ghi danh khóa học này cho người dùng không?
                 </DialogDescription>
               </div>
             </div>
@@ -1445,7 +1490,7 @@ export function UserEnrollmentDialog({
               ) : (
                 <Trash2 className="size-3.5" />
               )}
-              <span>Xác nhận xóa</span>
+              <span>Xác nhận hủy ghi danh</span>
             </Button>
           </div>
         </DialogContent>

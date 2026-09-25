@@ -6,9 +6,9 @@ export default function AdminDashboardPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Trang chủ</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Overview of your e-learning platform
+          Tổng quan tình hình hệ thống đào tạo E-Learning
         </p>
       </div>
 

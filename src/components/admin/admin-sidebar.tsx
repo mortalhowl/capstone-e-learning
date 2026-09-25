@@ -16,21 +16,6 @@ import {
   GraduationCap,
   UserCog,
   ClipboardList,
-  TrendingUp,
-  CreditCard,
-  Receipt,
-  ShoppingCart,
-  RotateCcw,
-  Megaphone,
-  Bell,
-  MessageSquare,
-  LifeBuoy,
-  BarChart3,
-  DollarSign,
-  UserCheck,
-  PieChart,
-  Shield,
-  Settings,
   ChevronRight,
   GraduationCap as LogoIcon,
 } from "lucide-react";
@@ -83,14 +68,14 @@ const NAV_GROUPS: NavGroup[] = [
     label: "",
     items: [
       {
-        title: "Dashboard",
+        title: "Trang chủ",
         url: "/admin",
         icon: LayoutDashboard,
       },
     ],
   },
   {
-    label: "Nội dung đào tạo",
+    label: "Quản lý đào tạo",
     items: [
       {
         title: "Quản lý khóa học",
@@ -116,83 +101,10 @@ const NAV_GROUPS: NavGroup[] = [
           { title: "Giảng viên / Giáo vụ", url: "/admin/users?role=GV", icon: UserCog },
         ],
       },
-    ],
-  },
-  {
-    label: "Vận hành & Ghi danh",
-    items: [
       {
         title: "Quản lý ghi danh",
         url: "/admin/enrollments",
         icon: ClipboardList,
-        items: [
-          { title: "Xét duyệt & Ghi danh", url: "/admin/enrollments", icon: ClipboardList },
-          { title: "Tiến độ học tập", url: "/admin/enrollments/progress", icon: TrendingUp },
-        ],
-      },
-      {
-        title: "Quản lý thanh toán",
-        url: "/admin/payments",
-        icon: CreditCard,
-        items: [
-          { title: "Giao dịch", url: "/admin/payments/transactions", icon: Receipt },
-          { title: "Đơn hàng", url: "/admin/payments/orders", icon: ShoppingCart },
-          { title: "Hoàn tiền", url: "/admin/payments/refunds", icon: RotateCcw },
-        ],
-      },
-    ],
-  },
-  {
-    label: "Tương tác & Hỗ trợ",
-    items: [
-      {
-        title: "Truyền thông",
-        url: "/admin/communication",
-        icon: Megaphone,
-        items: [
-          { title: "Thông báo chung", url: "/admin/communication/announcements", icon: Megaphone },
-          { title: "Thông báo hệ thống", url: "/admin/communication/notifications", icon: Bell },
-          { title: "Bình luận", url: "/admin/communication/comments", icon: MessageSquare },
-        ],
-      },
-      {
-        title: "Hỗ trợ kỹ thuật",
-        url: "/admin/support",
-        icon: LifeBuoy,
-        items: [
-          { title: "Phiếu hỗ trợ", url: "/admin/support/tickets", icon: LifeBuoy },
-        ],
-      },
-    ],
-  },
-  {
-    label: "Báo cáo & Thống kê",
-    items: [
-      {
-        title: "Báo cáo thống kê",
-        url: "/admin/reports",
-        icon: BarChart3,
-        items: [
-          { title: "Tổng quan báo cáo", url: "/admin/reports", icon: PieChart },
-          { title: "Báo cáo doanh thu", url: "/admin/reports/revenue", icon: DollarSign },
-          { title: "Thống kê người dùng", url: "/admin/reports/users", icon: UserCheck },
-          { title: "Thống kê khóa học", url: "/admin/reports/courses", icon: BarChart3 },
-        ],
-      },
-    ],
-  },
-  {
-    label: "Hệ thống",
-    items: [
-      {
-        title: "Phân quyền & Vai trò",
-        url: "/admin/roles",
-        icon: Shield,
-      },
-      {
-        title: "Cài đặt hệ thống",
-        url: "/admin/settings",
-        icon: Settings,
       },
     ],
   },
@@ -261,7 +173,7 @@ export function AdminSidebar() {
             <SidebarMenuButton
               size="lg"
               render={<Link href="/admin" onClick={handleNavClick} />}
-              tooltip="Admin Dashboard"
+              tooltip="Trang chủ Quản trị"
             >
               <div className="flex items-center justify-center size-8 rounded-lg bg-primary text-primary-foreground">
                 <LogoIcon className="size-4" />

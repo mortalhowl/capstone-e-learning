@@ -23,7 +23,7 @@ import { ToggleTheme } from "@/components/shared/toggle-theme";
 // Tạo breadcrumb từ pathname để user biết mình đang ở đâu
 
 const LABEL_MAP: Record<string, string> = {
-  admin: "Bảng điều khiển",
+  admin: "Trang chủ",
   courses: "Khóa học",
   categories: "Danh mục",
   chapters: "Chương mục",
