@@ -2,8 +2,10 @@
 
 import * as React from "react";
 import { AlertCircle, RefreshCw } from "lucide-react";
+import { useSearchParams, useRouter } from "next/navigation";
 
-import { usePaginatedCourse } from "@/hooks/useCourses";
+import { useCourses } from "@/hooks/useCourses";
+import { useAuthStore } from "@/stores/auth.store";
 import { useDebounce } from "@/hooks/use-debounce";
 import { CourseFilters } from "@/components/admin/courses/course-filters";
 import { CourseTable } from "@/components/admin/courses/course-table";
@@ -16,10 +18,17 @@ import { CourseEnrollmentDialog } from "@/components/admin/courses/course-enroll
 import { Button } from "@/components/ui/button";
 import type { Course } from "@/schemas/course.schema";
 
-export default function AdminCoursesPage() {
-  // 1. Quản lý State: tìm kiếm, phân trang và các dialog
+function AdminCoursesContent() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  // 1. Quản lý bộ lọc từ query params và state
+  const categoryFilter = searchParams.get("category") || "ALL";
+  const [creatorFilter, setCreatorFilter] = React.useState<string>("ALL");
   const [searchTerm, setSearchTerm] = React.useState<string>("");
   const [page, setPage] = React.useState<number>(1);
+
+  // 2. State điều khiển các modal dialogs
   const [isCreateOpen, setIsCreateOpen] = React.useState<boolean>(false);
   const [editingCourse, setEditingCourse] = React.useState<Course | null>(null);
   const [deletingCourse, setDeletingCourse] = React.useState<Course | null>(null);
@@ -27,31 +36,117 @@ export default function AdminCoursesPage() {
   const [enrollingCourse, setEnrollingCourse] = React.useState<Course | null>(null);
   const pageSize = 10;
 
-  // 2. Debounce từ khóa tìm kiếm (chờ 400ms sau khi người dùng dừng gõ)
+  // Lấy thông tin tài khoản người dùng đang đăng nhập (Yêu cầu 1)
+  const currentUser = useAuthStore((state) => state.user);
+  const currentUsername = currentUser?.taiKhoan || "";
+
+  // Debounce từ khóa tìm kiếm (400ms)
   const debouncedSearch = useDebounce(searchTerm.trim(), 400);
 
-  // 3. Mỗi khi từ khóa debounced thay đổi -> reset về Trang 1
-  React.useEffect(() => {
+  // Xử lý chuyển đổi danh mục (đồng bộ URL để navbar active) (Yêu cầu 2)
+  const handleCategoryChange = (newCat: string) => {
     setPage(1);
-  }, [debouncedSearch]);
+    if (newCat === "ALL") {
+      router.push("/admin/courses");
+    } else {
+      router.push(`/admin/courses?category=${newCat}`);
+    }
+  };
 
-  // 4. Gọi API LayDanhSachKhoaHoc_PhanTrang qua TanStack Query
-  const { data, isLoading, isFetching, error, refetch } = usePaginatedCourse(
-    debouncedSearch,
-    page,
-    pageSize,
-  );
-
-  const courses = data?.items || [];
-  const totalPages = data?.totalPages || 0;
-  const totalCount = data?.totalCount || 0;
-  const currentPage = data?.currentPage || page;
-
-  // Xử lý sự kiện xóa bộ lọc
-  const handleResetSearch = () => {
-    setSearchTerm("");
+  const handleCreatorChange = (newCreator: string) => {
+    setCreatorFilter(newCreator);
     setPage(1);
   };
+
+  const handleSearchChange = (val: string) => {
+    setSearchTerm(val);
+    setPage(1);
+  };
+
+  const handleResetSearch = () => {
+    setSearchTerm("");
+    setCreatorFilter("ALL");
+    setPage(1);
+    if (categoryFilter !== "ALL") {
+      router.push("/admin/courses");
+    }
+  };
+
+  // 3. Lấy toàn bộ danh sách khóa học để phân loại và sắp xếp ưu tiên chính xác
+  const {
+    data: allCourses = [],
+    isLoading,
+    isFetching,
+    error,
+    refetch,
+  } = useCourses();
+
+  // 4. Lọc & Sắp xếp dữ liệu theo yêu cầu
+  const filteredAndSortedCourses = React.useMemo(() => {
+    let list = allCourses;
+
+    // A. Lọc theo từ khóa tìm kiếm (Tên khóa học hoặc Mã khóa học)
+    if (debouncedSearch) {
+      const term = debouncedSearch.toLowerCase();
+      list = list.filter(
+        (c) =>
+          c.tenKhoaHoc?.toLowerCase().includes(term) ||
+          c.maKhoaHoc?.toLowerCase().includes(term),
+      );
+    }
+
+    // B. Lọc theo 6 Danh mục khóa học (Yêu cầu 2)
+    if (categoryFilter && categoryFilter !== "ALL") {
+      list = list.filter((c) => {
+        const catId = c.danhMucKhoaHoc?.maDanhMucKhoahoc;
+        return catId?.toLowerCase() === categoryFilter.toLowerCase();
+      });
+    }
+
+    // C. Lọc theo Người tạo nếu người dùng chọn "Chỉ khóa học của tôi"
+    if (creatorFilter === "MINE" && currentUsername) {
+      list = list.filter((c) => {
+        const creator = c.nguoiTao?.taiKhoan;
+        return creator?.toLowerCase() === currentUsername.toLowerCase();
+      });
+    }
+
+    // D. SẮP XẾP ƯU TIÊN (Yêu cầu 1):
+    // Khóa học do người dùng đang đăng nhập tạo sẽ LUÔN ĐƯỢC ƯU TIÊN HIỂN THỊ ĐẦU TIÊN
+    return [...list].sort((a, b) => {
+      const isAMine =
+        Boolean(currentUsername) &&
+        a.nguoiTao?.taiKhoan?.toLowerCase() === currentUsername.toLowerCase();
+      const isBMine =
+        Boolean(currentUsername) &&
+        b.nguoiTao?.taiKhoan?.toLowerCase() === currentUsername.toLowerCase();
+
+      // Nếu a do tôi tạo mà b không phải -> a lên đầu
+      if (isAMine && !isBMine) return -1;
+      // Nếu b do tôi tạo mà a không phải -> b lên đầu
+      if (!isAMine && isBMine) return 1;
+
+      // Cùng là của tôi hoặc cùng của người khác: sắp xếp theo ngày tạo mới nhất (nếu có)
+      if (a.ngayTao && b.ngayTao) {
+        const dateA = new Date(a.ngayTao).getTime();
+        const dateB = new Date(b.ngayTao).getTime();
+        if (!isNaN(dateA) && !isNaN(dateB)) {
+          return dateB - dateA;
+        }
+      }
+      return 0;
+    });
+  }, [allCourses, debouncedSearch, categoryFilter, creatorFilter, currentUsername]);
+
+  // 5. Phân trang Client-side chuẩn xác
+  const totalCount = filteredAndSortedCourses.length;
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+  const safePage = Math.min(page, totalPages);
+
+  const paginatedCourses = React.useMemo(() => {
+    const start = (safePage - 1) * pageSize;
+    return filteredAndSortedCourses.slice(start, start + pageSize);
+  }, [filteredAndSortedCourses, safePage, pageSize]);
 
   return (
     <div className="space-y-6">
@@ -62,15 +157,20 @@ export default function AdminCoursesPage() {
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
           Xem, tìm kiếm và quản lý danh sách toàn bộ các khóa học trong hệ thống
-          E-Learning.
+          E-Learning. Các khóa học do bạn tạo sẽ luôn được ưu tiên hiển thị ở đầu bảng.
         </p>
       </div>
 
-      {/* Thanh công cụ: Tìm kiếm & Nút chức năng */}
+      {/* Thanh công cụ: Tìm kiếm, lọc 6 danh mục, lọc người tạo & Nút chức năng */}
       <CourseFilters
         searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
+        onSearchChange={handleSearchChange}
         onResetSearch={handleResetSearch}
+        categoryFilter={categoryFilter}
+        onCategoryFilterChange={handleCategoryChange}
+        creatorFilter={creatorFilter}
+        onCreatorFilterChange={handleCreatorChange}
+        currentUsername={currentUsername}
         isLoading={isFetching}
         onRefresh={() => refetch()}
         totalCount={totalCount}
@@ -98,14 +198,15 @@ export default function AdminCoursesPage() {
         </div>
       )}
 
-      {/* Bảng dữ liệu khóa học */}
+      {/* Bảng dữ liệu khóa học với highlight khóa học của người dùng */}
       <CourseTable
-        courses={courses}
+        courses={paginatedCourses}
         isLoading={isLoading}
         isFetching={isFetching}
         onRefresh={() => refetch()}
         onResetSearch={handleResetSearch}
-        isFiltered={Boolean(debouncedSearch)}
+        isFiltered={Boolean(debouncedSearch || categoryFilter !== "ALL" || creatorFilter !== "ALL")}
+        currentUsername={currentUsername}
         onEditCourse={setEditingCourse}
         onDeleteCourse={setDeletingCourse}
         onUploadImage={setUploadingCourse}
@@ -114,7 +215,7 @@ export default function AdminCoursesPage() {
 
       {/* Thanh điều khiển phân trang */}
       <CoursePagination
-        currentPage={currentPage}
+        currentPage={safePage}
         totalPages={totalPages}
         totalCount={totalCount}
         pageSize={pageSize}
@@ -156,5 +257,19 @@ export default function AdminCoursesPage() {
         onOpenChange={(open) => !open && setEnrollingCourse(null)}
       />
     </div>
+  );
+}
+
+export default function AdminCoursesPage() {
+  return (
+    <React.Suspense
+      fallback={
+        <div className="p-6 text-center text-sm text-muted-foreground">
+          Đang tải danh sách khóa học...
+        </div>
+      }
+    >
+      <AdminCoursesContent />
+    </React.Suspense>
   );
 }

@@ -6,10 +6,12 @@ import { usePathname, useSearchParams } from "next/navigation";
 import {
   LayoutDashboard,
   BookOpen,
-  FolderTree,
+  Code2,
+  Palette,
+  Smartphone,
+  Layout,
   Layers,
-  FileText,
-  Star,
+  Brain,
   Users,
   GraduationCap,
   UserCog,
@@ -96,10 +98,12 @@ const NAV_GROUPS: NavGroup[] = [
         icon: BookOpen,
         items: [
           { title: "Tất cả khóa học", url: "/admin/courses", icon: BookOpen },
-          { title: "Danh mục khóa học", url: "/admin/courses/categories", icon: FolderTree },
-          { title: "Chương mục", url: "/admin/courses/chapters", icon: Layers },
-          { title: "Bài học", url: "/admin/courses/lessons", icon: FileText },
-          { title: "Đánh giá khóa học", url: "/admin/courses/reviews", icon: Star },
+          { title: "Lập trình Backend", url: "/admin/courses?category=BackEnd", icon: Code2 },
+          { title: "Thiết kế Web", url: "/admin/courses?category=Design", icon: Palette },
+          { title: "Lập trình di động", url: "/admin/courses?category=DiDong", icon: Smartphone },
+          { title: "Lập trình Front end", url: "/admin/courses?category=FrontEnd", icon: Layout },
+          { title: "Lập trình Full Stack", url: "/admin/courses?category=FullStack", icon: Layers },
+          { title: "Tư duy lập trình", url: "/admin/courses?category=TuDuy", icon: Brain },
         ],
       },
       {
@@ -209,14 +213,29 @@ export function AdminSidebar() {
   }, [isMobile, setOpenMobile]);
 
   // Kiểm tra xem một URL có đang active không
-  // Hỗ trợ cả query params (ví dụ ?role=HV, ?role=GV)
+  // Hỗ trợ cả query params (ví dụ ?role=HV, ?role=GV, ?category=BackEnd)
   const isActive = (url: string) => {
     if (url === "/admin") return pathname === "/admin";
     if (url.includes("?")) {
       const [path, query] = url.split("?");
       const params = new URLSearchParams(query);
       const role = params.get("role");
-      return pathname === path && searchParams.get("role") === role;
+      const category = params.get("category");
+      if (role) {
+        return pathname === path && searchParams.get("role") === role;
+      }
+      if (category) {
+        return (
+          pathname === path &&
+          searchParams.get("category")?.toLowerCase() === category.toLowerCase()
+        );
+      }
+    }
+    if (url === "/admin/courses") {
+      return (
+        pathname === "/admin/courses" &&
+        (!searchParams.get("category") || searchParams.get("category") === "ALL")
+      );
     }
     if (url === "/admin/users") {
       return (

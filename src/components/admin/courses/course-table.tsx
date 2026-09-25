@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import Image from "next/image";
 import Link from "next/link";
 import {
   Eye,
@@ -13,7 +12,6 @@ import {
   Trash2,
   UserPlus,
   BookOpen,
-  AlertCircle,
   ImagePlus,
 } from "lucide-react";
 
@@ -27,7 +25,6 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,7 +32,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { CourseTableSkeleton } from "@/components/admin/table-skeleton";
 import type { Course } from "@/schemas/course.schema";
 
@@ -50,6 +46,7 @@ interface CourseTableProps {
   onDeleteCourse?: (course: Course) => void;
   onUploadImage?: (course: Course) => void;
   onEnrollUsers?: (course: Course) => void;
+  currentUsername?: string;
 }
 
 export function CourseTable({
@@ -62,6 +59,7 @@ export function CourseTable({
   onDeleteCourse,
   onUploadImage,
   onEnrollUsers,
+  currentUsername,
 }: CourseTableProps) {
   // State quản lý danh sách ảnh bị lỗi để fallback sang placeholder
   const [imageErrors, setImageErrors] = React.useState<Record<string, boolean>>({});
@@ -124,9 +122,18 @@ export function CourseTable({
           <TableBody>
             {courses.map((course) => {
               const hasImgError = imageErrors[course.maKhoaHoc];
+              const isMyCourse =
+                Boolean(currentUsername) &&
+                course.nguoiTao?.taiKhoan?.toLowerCase() ===
+                  currentUsername?.toLowerCase();
 
               return (
-                <TableRow key={course.maKhoaHoc} className="hover:bg-muted/40 transition-colors">
+                <TableRow
+                  key={course.maKhoaHoc}
+                  className={`hover:bg-muted/40 transition-colors ${
+                    isMyCourse ? "bg-primary/[0.04]" : ""
+                  }`}
+                >
                   {/* Cột 1: Thông tin khóa học */}
                   <TableCell>
                     <div className="flex items-center gap-3">
@@ -161,6 +168,14 @@ export function CourseTable({
                           <Badge variant="outline" className="font-mono text-[10px] px-1.5 py-0 h-4">
                             {course.maKhoaHoc}
                           </Badge>
+                          {isMyCourse && (
+                            <Badge
+                              variant="outline"
+                              className="bg-primary/10 text-primary border-primary/20 text-[10px] px-1.5 py-0 h-4 font-normal"
+                            >
+                              Khóa học của bạn
+                            </Badge>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -175,10 +190,20 @@ export function CourseTable({
 
                   {/* Cột 3: Người tạo */}
                   <TableCell>
-                    <div className="text-sm font-medium">
-                      {course.nguoiTao?.hoTen || "Quản trị viên"}
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm font-medium">
+                        {course.nguoiTao?.hoTen || "Quản trị viên"}
+                      </span>
+                      {isMyCourse && (
+                        <Badge
+                          variant="outline"
+                          className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 text-[10px] px-1 py-0 h-4 font-normal"
+                        >
+                          Bạn
+                        </Badge>
+                      )}
                     </div>
-                    <div className="text-xs text-muted-foreground">
+                    <div className="text-xs text-muted-foreground font-mono">
                       @{course.nguoiTao?.taiKhoan || "admin"}
                     </div>
                   </TableCell>
