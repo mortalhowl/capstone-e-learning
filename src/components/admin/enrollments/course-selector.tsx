@@ -1,8 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { BookOpen, Check, ChevronsUpDown, Search, Users } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { BookOpen, Check, Search, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { Course } from "@/schemas/course.schema";
 
@@ -11,6 +10,7 @@ interface CourseSelectorProps {
   selectedCourseId: string;
   onSelectCourse: (courseId: string) => void;
   isLoading?: boolean;
+  currentUsername?: string;
 }
 
 export function CourseSelector({
@@ -18,20 +18,22 @@ export function CourseSelector({
   selectedCourseId,
   onSelectCourse,
   isLoading,
+  currentUsername,
 }: CourseSelectorProps) {
   const [searchTerm, setSearchTerm] = React.useState("");
 
   const filteredCourses = React.useMemo(() => {
-    if (!searchTerm.trim()) return courses;
+    const validCourses = courses.filter(
+      (c) => Boolean(c && typeof c.maKhoaHoc === "string" && c.maKhoaHoc.trim()),
+    );
+    if (!searchTerm.trim()) return validCourses;
     const term = searchTerm.toLowerCase();
-    return courses.filter(
+    return validCourses.filter(
       (c) =>
-        c.tenKhoaHoc.toLowerCase().includes(term) ||
-        c.maKhoaHoc.toLowerCase().includes(term)
+        c.tenKhoaHoc?.toLowerCase().includes(term) ||
+        c.maKhoaHoc?.toLowerCase().includes(term),
     );
   }, [courses, searchTerm]);
-
-  const selectedCourse = courses.find((c) => c.maKhoaHoc === selectedCourseId);
 
   return (
     <div className="space-y-3">
@@ -62,16 +64,23 @@ export function CourseSelector({
             Không tìm thấy khóa học nào phù hợp.
           </div>
         ) : (
-          filteredCourses.map((course) => {
+          filteredCourses.map((course, index) => {
             const isSelected = course.maKhoaHoc === selectedCourseId;
+            const isMyCourse =
+              Boolean(currentUsername) &&
+              course.nguoiTao?.taiKhoan?.toLowerCase() ===
+                currentUsername?.toLowerCase();
+
             return (
               <button
-                key={course.maKhoaHoc}
+                key={course.maKhoaHoc || `course-${index}`}
                 type="button"
                 onClick={() => onSelectCourse(course.maKhoaHoc)}
                 className={`flex items-center gap-3 p-2.5 rounded-md text-left transition-all border ${
                   isSelected
                     ? "border-primary bg-primary/10 shadow-xs ring-1 ring-primary"
+                    : isMyCourse
+                    ? "border-primary/40 bg-card hover:bg-muted/60"
                     : "border-border/60 bg-card hover:bg-muted/60 hover:border-border"
                 }`}
               >
@@ -99,13 +108,21 @@ export function CourseSelector({
                   >
                     {course.tenKhoaHoc}
                   </div>
-                  <div className="flex items-center gap-2 mt-1">
+                  <div className="flex items-center gap-2 mt-1 flex-wrap">
                     <Badge
                       variant="outline"
                       className="font-mono text-[10px] px-1 py-0 h-4"
                     >
                       {course.maKhoaHoc}
                     </Badge>
+                    {isMyCourse && (
+                      <Badge
+                        variant="outline"
+                        className="bg-primary/10 text-primary border-primary/20 text-[10px] px-1 py-0 h-4 font-normal"
+                      >
+                        Của bạn
+                      </Badge>
+                    )}
                     <span className="text-[11px] text-muted-foreground flex items-center gap-1">
                       <Users className="size-3" />
                       {course.soLuongHocVien || 0} HV

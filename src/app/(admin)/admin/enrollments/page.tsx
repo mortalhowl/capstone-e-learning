@@ -6,7 +6,6 @@ import {
   BookOpen,
   ClipboardList,
   GraduationCap,
-  Layers,
   RefreshCw,
   Clock,
   UserCheck,
@@ -31,30 +30,68 @@ import { EnrolledStudentsTable } from "@/components/admin/enrollments/enrolled-s
 import { PendingStudentsTable } from "@/components/admin/enrollments/pending-students-table";
 import { UnenrolledStudentsTable } from "@/components/admin/enrollments/unenrolled-students-table";
 import { ManualEnrollDialog } from "@/components/admin/enrollments/manual-enroll-dialog";
+import { useAuthStore } from "@/stores/auth.store";
 
 function EnrollmentContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const courseIdParam = searchParams.get("courseId") || "";
 
+  const currentUser = useAuthStore((state) => state.user);
+  const currentUsername = currentUser?.taiKhoan || "";
+
   // 1. Fetch danh sách khóa học
-  const { data: courses = [], isLoading: isLoadingCourses } = useCourses("");
+  const { data: rawCourses = [], isLoading: isLoadingCourses } = useCourses("");
+
+  // Lọc bỏ các khóa học không hợp lệ (không có mã khóa học) và sắp xếp ưu tiên:
+  // Khóa học do người dùng đang đăng nhập tạo sẽ LUÔN ĐƯỢC HIỂN THỊ ĐẦU TIÊN (Yêu cầu 1)
+  const courses = React.useMemo(() => {
+    return rawCourses
+      .filter((c) => Boolean(c && typeof c.maKhoaHoc === "string" && c.maKhoaHoc.trim()))
+      .sort((a, b) => {
+        const isAMine =
+          Boolean(currentUsername) &&
+          a.nguoiTao?.taiKhoan?.toLowerCase() === currentUsername.toLowerCase();
+        const isBMine =
+          Boolean(currentUsername) &&
+          b.nguoiTao?.taiKhoan?.toLowerCase() === currentUsername.toLowerCase();
+
+        // Khóa học của tài khoản đăng nhập lên đầu
+        if (isAMine && !isBMine) return -1;
+        if (!isAMine && isBMine) return 1;
+
+        // Trong cùng nhóm: sắp xếp theo ngày tạo mới nhất
+        if (a.ngayTao && b.ngayTao) {
+          const dateA = new Date(a.ngayTao).getTime();
+          const dateB = new Date(b.ngayTao).getTime();
+          if (!isNaN(dateA) && !isNaN(dateB)) {
+            return dateB - dateA;
+          }
+        }
+        return 0;
+      });
+  }, [rawCourses, currentUsername]);
 
   // 2. Quản lý khóa học đang chọn & Dialog ghi danh thủ công
-  const [selectedCourseId, setSelectedCourseId] = React.useState<string>(courseIdParam);
+  const [selectedCourseState, setSelectedCourseState] = React.useState<string>("");
   const [isManualEnrollOpen, setIsManualEnrollOpen] = React.useState<boolean>(false);
 
-  // Cập nhật selectedCourseId khi URL param hoặc danh sách khóa học thay đổi
-  React.useEffect(() => {
-    if (courseIdParam) {
-      setSelectedCourseId(courseIdParam);
-    } else if (courses.length > 0 && !selectedCourseId) {
-      setSelectedCourseId(courses[0].maKhoaHoc);
+  // Khóa học đang chọn được ưu tiên theo:
+  // 1. URL param ?courseId=... nếu tồn tại trong danh sách khóa học hợp lệ
+  // 2. State do người dùng vừa click chọn nếu hợp lệ trong danh sách
+  // 3. Khóa học đầu tiên trong danh sách (khóa học của tôi tạo lên đầu tiên)
+  const selectedCourseId = React.useMemo(() => {
+    if (courseIdParam && courses.some((c) => c.maKhoaHoc === courseIdParam)) {
+      return courseIdParam;
     }
-  }, [courseIdParam, courses, selectedCourseId]);
+    if (selectedCourseState && courses.some((c) => c.maKhoaHoc === selectedCourseState)) {
+      return selectedCourseState;
+    }
+    return courses.length > 0 ? courses[0].maKhoaHoc : "";
+  }, [courseIdParam, selectedCourseState, courses]);
 
   const handleSelectCourse = (courseId: string) => {
-    setSelectedCourseId(courseId);
+    setSelectedCourseState(courseId);
     router.replace(`/admin/enrollments?courseId=${encodeURIComponent(courseId)}`);
   };
 
@@ -179,6 +216,7 @@ function EnrollmentContent() {
             selectedCourseId={selectedCourseId}
             onSelectCourse={handleSelectCourse}
             isLoading={isLoadingCourses}
+            currentUsername={currentUsername}
           />
         </CardContent>
       </Card>

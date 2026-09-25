@@ -120,7 +120,7 @@ export function CourseTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {courses.map((course) => {
+            {courses.map((course, index) => {
               const hasImgError = imageErrors[course.maKhoaHoc];
               const isMyCourse =
                 Boolean(currentUsername) &&
@@ -129,7 +129,7 @@ export function CourseTable({
 
               return (
                 <TableRow
-                  key={course.maKhoaHoc}
+                  key={course.maKhoaHoc || `course-${index}`}
                   className={`hover:bg-muted/40 transition-colors ${
                     isMyCourse ? "bg-primary/[0.04]" : ""
                   }`}

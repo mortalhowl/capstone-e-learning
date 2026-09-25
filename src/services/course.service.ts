@@ -17,13 +17,23 @@ export const PaginatedCourseSchema = createPaginatedResponse(CourseSchema);
 export type PaginatedCourse = z.infer<typeof PaginatedCourseSchema>;
 
 export const courseService = {
-  getCourses: (tenKhoaHoc = "") =>
-    axiosInstance.get<Course[]>("/api/QuanLyKhoaHoc/LayDanhSachKhoaHoc", {
-      params: {
-        tenKhoaHoc: tenKhoaHoc || undefined,
-        maNhom: MA_NHOM,
+  getCourses: async (tenKhoaHoc = "") => {
+    const response = await axiosInstance.get<Course[]>(
+      "/api/QuanLyKhoaHoc/LayDanhSachKhoaHoc",
+      {
+        params: {
+          tenKhoaHoc: tenKhoaHoc || undefined,
+          maNhom: MA_NHOM,
+        },
       },
-    }),
+    );
+    if (Array.isArray(response.data)) {
+      response.data = response.data.filter(
+        (c) => Boolean(c && typeof c.maKhoaHoc === "string" && c.maKhoaHoc.trim()),
+      );
+    }
+    return response;
+  },
 
   getCategories: (tenDanhMuc = "") =>
     axiosInstance.get<CourseCategory[]>(
@@ -35,16 +45,26 @@ export const courseService = {
       },
     ),
 
-  getByCategory: (maDanhMuc = "") =>
-    axiosInstance.get<Course[]>("/api/QuanLyKhoaHoc/LayKhoaHocTheoDanhMuc", {
-      params: {
-        maDanhMuc: maDanhMuc || undefined,
-        maNhom: MA_NHOM,
+  getByCategory: async (maDanhMuc = "") => {
+    const response = await axiosInstance.get<Course[]>(
+      "/api/QuanLyKhoaHoc/LayKhoaHocTheoDanhMuc",
+      {
+        params: {
+          maDanhMuc: maDanhMuc || undefined,
+          maNhom: MA_NHOM,
+        },
       },
-    }),
+    );
+    if (Array.isArray(response.data)) {
+      response.data = response.data.filter(
+        (c) => Boolean(c && typeof c.maKhoaHoc === "string" && c.maKhoaHoc.trim()),
+      );
+    }
+    return response;
+  },
 
-  getPaginatedCourse: (tenKhoaHoc = "", page = 1, pageSize = 10) =>
-    axiosInstance.get<PaginatedCourse>(
+  getPaginatedCourse: async (tenKhoaHoc = "", page = 1, pageSize = 10) => {
+    const response = await axiosInstance.get<PaginatedCourse>(
       "/api/QuanLyKhoaHoc/LayDanhSachKhoaHoc_PhanTrang",
       {
         params: {
@@ -54,7 +74,14 @@ export const courseService = {
           maNhom: MA_NHOM,
         },
       },
-    ),
+    );
+    if (response.data && Array.isArray(response.data.items)) {
+      response.data.items = response.data.items.filter(
+        (c) => Boolean(c && typeof c.maKhoaHoc === "string" && c.maKhoaHoc.trim()),
+      );
+    }
+    return response;
+  },
 
   getCourse: (maKhoaHoc = "") =>
     axiosInstance.get<Course>("/api/QuanLyKhoaHoc/LayThongTinKhoaHoc", {

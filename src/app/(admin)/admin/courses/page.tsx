@@ -83,7 +83,9 @@ function AdminCoursesContent() {
 
   // 4. Lọc & Sắp xếp dữ liệu theo yêu cầu
   const filteredAndSortedCourses = React.useMemo(() => {
-    let list = allCourses;
+    let list = allCourses.filter(
+      (c) => Boolean(c && typeof c.maKhoaHoc === "string" && c.maKhoaHoc.trim()),
+    );
 
     // A. Lọc theo từ khóa tìm kiếm (Tên khóa học hoặc Mã khóa học)
     if (debouncedSearch) {
