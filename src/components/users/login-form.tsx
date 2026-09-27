@@ -42,17 +42,26 @@ export function LoginForm() {
 
   React.useEffect(() => {
     if (currentUser) {
-      router.replace(callbackUrl || "/");
+      if (currentUser.maLoaiNguoiDung === "GV") {
+        router.replace(callbackUrl?.startsWith("/admin") ? callbackUrl : "/admin");
+      } else {
+        router.replace(callbackUrl || "/");
+      }
     }
   }, [currentUser, callbackUrl, router]);
 
   const onSubmit = async (values: LoginPayload) => {
     loginMutation.mutate(values, {
-      onSuccess: () => {
+      onSuccess: (res) => {
         toast.success("Đăng nhập thành công!", {
           description: "Chào mừng bạn quay trở lại với hệ thống.",
         });
-        router.push(callbackUrl || "/");
+
+        if (res.data.maLoaiNguoiDung === "GV") {
+          router.push(callbackUrl?.startsWith("/admin") ? callbackUrl : "/admin");
+        } else {
+          router.push(callbackUrl || "/");
+        }
       },
       onError: (error) => {
         if (isAxiosError(error)) {
@@ -79,7 +88,9 @@ export function LoginForm() {
         <div className="py-10 flex flex-col items-center justify-center gap-3">
           <Loader2 className="size-8 animate-spin text-primary" />
           <p className="text-sm text-muted-foreground">
-            Đang chuyển bạn về trang chủ...
+            {currentUser.maLoaiNguoiDung === "GV"
+              ? "Đang chuyển bạn về trang quản trị..."
+              : "Đang chuyển bạn về trang chủ..."}
           </p>
         </div>
       </AuthCard>

@@ -59,6 +59,7 @@ export function RegisterForm() {
       soDT: values.soDT.trim(),
       email: values.email.trim(),
       maNhom: values.maNhom || MA_NHOM || "GP07",
+      maLoaiNguoiDung: "HV",
     };
 
     registerMutation.mutate(payload, {
