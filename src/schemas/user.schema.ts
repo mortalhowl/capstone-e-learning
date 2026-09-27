@@ -64,6 +64,7 @@ export const RegisterSchema = z.object({
     .string()
     .min(1, "Email không được để trống")
     .email("Email không đúng định dạng"),
+  maLoaiNguoiDung: z.string().default("HV").optional(),
 });
 export type RegisterPayload = z.infer<typeof RegisterSchema>;
 

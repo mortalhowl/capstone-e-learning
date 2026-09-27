@@ -78,7 +78,7 @@ export function UserNav({ user }: UserNavProps) {
 
         <DropdownMenuGroup>
           <DropdownMenuItem
-            onClick={() => router.push("/profile")}
+            onClick={() => router.push("/profile?tab=account")}
             className="flex items-center gap-2.5 px-2 py-1.5 text-sm cursor-pointer"
           >
             <User className="size-4 text-muted-foreground" />
@@ -86,7 +86,7 @@ export function UserNav({ user }: UserNavProps) {
           </DropdownMenuItem>
 
           <DropdownMenuItem
-            onClick={() => router.push("/profile/my-courses")}
+            onClick={() => router.push("/profile?tab=my-courses")}
             className="flex items-center gap-2.5 px-2 py-1.5 text-sm cursor-pointer"
           >
             <BookOpen className="size-4 text-muted-foreground" />
